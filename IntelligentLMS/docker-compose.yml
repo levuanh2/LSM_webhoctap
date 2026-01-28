@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/IntelligentLMS.Gateway/Dockerfile
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - user-service
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: src/Services/Auth/IntelligentLMS.Auth/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_auth;Username=admin;Password=password
+      - Jwt__Issuer=intelligent-lms
+    depends_on:
+      - postgres
+
+  user-service:
+    build:
+      context: .
+      dockerfile: src/Services/User/IntelligentLMS.User/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_user;Username=admin;Password=password
+    depends_on:
+      - postgres
+
+  course-service:
+    build:
+      context: .
+      dockerfile: src/Services/Course/IntelligentLMS.Course/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_course;Username=admin;Password=password
+    depends_on:
+      - postgres
+
+  progress-service:
+    build:
+      context: .
+      dockerfile: src/Services/Progress/IntelligentLMS.Progress/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_progress;Username=admin;Password=password
+    depends_on:
+      - postgres
+      - ai-service
+
+  ai-service:
+    build:
+      context: src/Services/AI
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: lms_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

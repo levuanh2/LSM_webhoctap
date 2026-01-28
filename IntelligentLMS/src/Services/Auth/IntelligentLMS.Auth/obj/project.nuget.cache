@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "E9Xa/xJv3Kk=",
+  "success": true,
+  "projectFilePath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Services\\Auth\\IntelligentLMS.Auth\\IntelligentLMS.Auth.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Vu Anh\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.1\\microsoft.aspnetcore.openapi.10.0.1.nupkg.sha512",
+    "C:\\Users\\Vu Anh\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

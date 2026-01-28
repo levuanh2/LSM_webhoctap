@@ -1,0 +1,6 @@
+@IntelligentLMS.Auth_HostAddress = http://localhost:5144
+
+GET {{IntelligentLMS.Auth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

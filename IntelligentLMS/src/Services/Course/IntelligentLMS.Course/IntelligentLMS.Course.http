@@ -1,0 +1,6 @@
+@IntelligentLMS.Course_HostAddress = http://localhost:5108
+
+GET {{IntelligentLMS.Course_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
