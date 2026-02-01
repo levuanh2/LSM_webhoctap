@@ -1,5 +1,6 @@
 using IntelligentLMS.Auth.Services;
-using IntelligentLMS.Shared.DTOs;
+using IntelligentLMS.Shared.DTOs.Auth;
+using IntelligentLMS.Shared.DTOs.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IntelligentLMS.Auth.Controllers;
@@ -44,7 +45,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] LoginResponse request)
+    public async Task<IActionResult> Refresh([FromBody] JwtResponse request)
     {
          try
         {

@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using IntelligentLMS.Shared.DTOs;
+using IntelligentLMS.Shared.DTOs.Common;
 
 namespace IntelligentLMS.Auth.Entities;
 
@@ -11,7 +11,7 @@ public class User
     [Required]
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public string Role { get; set; } = roles.Student;
+    public string Role { get; set; } = Roles.Student;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsLocked { get; set; } = false;
 }

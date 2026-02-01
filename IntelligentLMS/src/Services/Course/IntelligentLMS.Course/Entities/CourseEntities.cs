@@ -22,6 +22,7 @@ public class Lesson
     public Guid CourseId { get; set; }
     [Required]
     public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
     public int Order { get; set; }
     public string ContentUrl { get; set; } = string.Empty; // URL to video or document
     public string ContentType { get; set; } = "Video";

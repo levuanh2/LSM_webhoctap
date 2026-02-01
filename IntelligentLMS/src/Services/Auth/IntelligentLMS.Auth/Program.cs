@@ -12,11 +12,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Core Services
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -48,11 +49,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Auto-migrate
+// Auto-migrate (simplify or remove if user wants pure template, but keeping for functionality)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    // db.Database.Migrate(); // Commented out to avoid issues if DB is not ready
     db.Database.EnsureCreated();
 }
 
