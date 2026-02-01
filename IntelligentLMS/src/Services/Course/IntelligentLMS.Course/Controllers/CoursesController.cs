@@ -1,6 +1,6 @@
 using IntelligentLMS.Course.Data;
 using IntelligentLMS.Course.Entities;
-using IntelligentLMS.Shared.DTOs;
+using IntelligentLMS.Shared.DTOs.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +21,16 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetCourses()
     {
         var courses = await _context.Courses.ToListAsync();
-        return Ok(courses);
+        var courseDtos = courses.Select(c => new CourseDto
+        {
+            Id = c.Id,
+            Title = c.Title,
+            Description = c.Description,
+            Level = c.Level,
+            Category = c.Category,
+            InstructorId = c.InstructorId
+        });
+        return Ok(courseDtos);
     }
 
     [HttpGet("{id}")]
@@ -32,7 +41,20 @@ public class CoursesController : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == id);
             
         if (course == null) return NotFound();
-        return Ok(course);
+
+        // Note: CourseDto doesn't currently support Lessons list, so we might lose lessons here unless we extend DTO.
+        // For now adhering to strict DTO definition from request.
+        // Ideally we should have CourseDetailDto.
+        var courseDto = new CourseDto
+        {
+            Id = course.Id,
+            Title = course.Title,
+            Description = course.Description,
+            Level = course.Level,
+            Category = course.Category,
+            InstructorId = course.InstructorId
+        };
+        return Ok(courseDto);
     }
 
     [HttpPost]
@@ -51,20 +73,39 @@ public class CoursesController : ControllerBase
         _context.Courses.Add(course);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, course);
+        var courseDto = new CourseDto
+        {
+            Id = course.Id,
+            Title = course.Title,
+            Description = course.Description,
+            Level = course.Level,
+            Category = course.Category,
+            InstructorId = course.InstructorId
+        };
+
+        return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, courseDto);
     }
 
     [HttpPost("{courseId}/lessons")]
-    public async Task<IActionResult> AddLesson(Guid courseId, [FromBody] Lesson lesson)
+    public async Task<IActionResult> AddLesson(Guid courseId, [FromBody] LessonDto lessonDto)
     {
         var course = await _context.Courses.FindAsync(courseId);
         if (course == null) return NotFound("Course not found");
 
-        lesson.CourseId = courseId;
+        var lesson = new Lesson
+        {
+            Title = lessonDto.Title,
+            Content = lessonDto.Content,
+            CourseId = courseId,
+            Order = lessonDto.Order
+        };
+
         _context.Lessons.Add(lesson);
         await _context.SaveChangesAsync();
+        
+        lessonDto.Id = lesson.Id;
 
-        return Ok(lesson);
+        return Ok(lessonDto);
     }
 
     [HttpDelete("{id}")]

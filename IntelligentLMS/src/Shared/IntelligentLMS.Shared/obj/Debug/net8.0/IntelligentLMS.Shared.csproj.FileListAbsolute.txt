@@ -1,0 +1,12 @@
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\bin\Debug\net8.0\IntelligentLMS.Shared.deps.json
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\bin\Debug\net8.0\IntelligentLMS.Shared.dll
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\bin\Debug\net8.0\IntelligentLMS.Shared.pdb
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.GeneratedMSBuildEditorConfig.editorconfig
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.AssemblyInfoInputs.cache
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.AssemblyInfo.cs
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.csproj.CoreCompileInputs.cache
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.sourcelink.json
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.dll
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\refint\IntelligentLMS.Shared.dll
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\IntelligentLMS.Shared.pdb
+E:\doancosonganh\LSM_webhoctap\IntelligentLMS\src\Shared\IntelligentLMS.Shared\obj\Debug\net8.0\ref\IntelligentLMS.Shared.dll

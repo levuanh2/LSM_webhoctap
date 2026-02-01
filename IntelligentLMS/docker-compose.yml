@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   gateway:
     build:
@@ -7,9 +5,19 @@ services:
       dockerfile: src/Gateway/IntelligentLMS.Gateway/Dockerfile
     ports:
       - "5000:8080"
+    environment:
+      - ReverseProxy__Clusters__auth-cluster__Destinations__destination1__Address=http://auth-service:8080
+      - ReverseProxy__Clusters__user-cluster__Destinations__destination1__Address=http://user-service:8080
+      - ReverseProxy__Clusters__course-cluster__Destinations__destination1__Address=http://course-service:8080
+      - ReverseProxy__Clusters__progress-cluster__Destinations__destination1__Address=http://progress-service:8080
+      - Jwt__Issuer=intelligent-lms
+      - Jwt__Audience=intelligent-lms
+      - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
     depends_on:
       - auth-service
       - user-service
+      - course-service
+      - progress-service
 
   auth-service:
     build:
@@ -17,7 +25,9 @@ services:
       dockerfile: src/Services/Auth/IntelligentLMS.Auth/Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_auth;Username=admin;Password=password
+      - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
       - Jwt__Issuer=intelligent-lms
+      - Jwt__Audience=intelligent-lms
     depends_on:
       - postgres
 
@@ -47,14 +57,14 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_progress;Username=admin;Password=password
     depends_on:
       - postgres
-      - ai-service
+      # - ai-service # Commented out if not built yet or handled elsewhere
 
-  ai-service:
-    build:
-      context: src/Services/AI
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+      # ai-service:
+      #   build:
+      #     context: src/Services/AI
+      #     dockerfile: Dockerfile
+      #   ports:
+      #     - "8000:8000"
 
   postgres:
     image: postgres:15-alpine

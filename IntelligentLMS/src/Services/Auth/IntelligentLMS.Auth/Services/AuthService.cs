@@ -1,9 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BCrypt.Net;
 using IntelligentLMS.Auth.Data;
 using IntelligentLMS.Auth.Entities;
-using IntelligentLMS.Shared.DTOs;
+using IntelligentLMS.Shared.DTOs.Auth;
+using IntelligentLMS.Shared.DTOs.Common;
+using IntelligentLMS.Shared.DTOs.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -11,9 +14,9 @@ namespace IntelligentLMS.Auth.Services;
 
 public interface IAuthService
 {
-    Task<LoginResponse> LoginAsync(LoginRequest request);
+    Task<JwtResponse> LoginAsync(LoginRequest request);
     Task<UserDto> RegisterAsync(RegisterRequest request);
-    Task<LoginResponse> RefreshTokenAsync(string token, string refreshToken);
+    Task<JwtResponse> RefreshTokenAsync(string token, string refreshToken);
 }
 
 public class AuthService : IAuthService
@@ -37,7 +40,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             FullName = request.FullName,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = roles.Student
+            Role = Roles.Student
         };
 
         _context.Users.Add(user);
@@ -52,7 +55,7 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    public async Task<JwtResponse> LoginAsync(LoginRequest request)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -64,7 +67,7 @@ public class AuthService : IAuthService
         return await GenerateTokensAsync(user);
     }
 
-    public async Task<LoginResponse> RefreshTokenAsync(string token, string refreshToken)
+    public async Task<JwtResponse> RefreshTokenAsync(string token, string refreshToken)
     {
         var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken);
         if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
@@ -79,7 +82,7 @@ public class AuthService : IAuthService
         return await GenerateTokensAsync(user);
     }
 
-    private async Task<LoginResponse> GenerateTokensAsync(User user)
+    private async Task<JwtResponse> GenerateTokensAsync(User user)
     {
         var claims = new[]
         {
@@ -109,7 +112,7 @@ public class AuthService : IAuthService
         _context.RefreshTokens.Add(refreshToken);
         await _context.SaveChangesAsync();
 
-        return new LoginResponse
+        return new JwtResponse
         {
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             RefreshToken = refreshToken.Token

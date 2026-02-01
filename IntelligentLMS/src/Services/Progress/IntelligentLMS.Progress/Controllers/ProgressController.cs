@@ -1,6 +1,7 @@
 using IntelligentLMS.Progress.Data;
 using IntelligentLMS.Progress.Entities;
 using IntelligentLMS.Progress.Services;
+using IntelligentLMS.Shared.DTOs.Progress;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,26 +21,41 @@ public class ProgressController : ControllerBase
     }
 
     [HttpPost("enroll")]
-    public async Task<IActionResult> Enroll([FromBody] Enrollment enrollment)
+    public async Task<IActionResult> Enroll([FromBody] EnrollmentDto enrollmentDto)
     {
-        if (await _context.Enrollments.AnyAsync(e => e.UserId == enrollment.UserId && e.CourseId == enrollment.CourseId))
+        if (await _context.Enrollments.AnyAsync(e => e.UserId == enrollmentDto.UserId && e.CourseId == enrollmentDto.CourseId))
             return BadRequest("Already enrolled");
+
+        var enrollment = new Enrollment
+        {
+            UserId = enrollmentDto.UserId,
+            CourseId = enrollmentDto.CourseId,
+            EnrolledAt = DateTime.UtcNow
+        };
 
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
-        return Ok(enrollment);
+        
+        enrollmentDto.EnrolledAt = enrollment.EnrolledAt;
+        
+        return Ok(enrollmentDto);
     }
 
     [HttpPost("complete")]
-    public async Task<IActionResult> CompleteLesson([FromBody] LessonProgress progress)
+    public async Task<IActionResult> CompleteLesson([FromBody] ProgressDto progressDto)
     {
         var existing = await _context.LessonProgresses
-            .FirstOrDefaultAsync(p => p.UserId == progress.UserId && p.LessonId == progress.LessonId);
+            .FirstOrDefaultAsync(p => p.UserId == progressDto.UserId && p.LessonId == progressDto.LessonId);
 
         if (existing == null)
         {
-            progress.IsCompleted = true;
-            progress.CompletedAt = DateTime.UtcNow;
+            var progress = new LessonProgress
+            {
+                UserId = progressDto.UserId,
+                LessonId = progressDto.LessonId,
+                IsCompleted = true,
+                CompletedAt = DateTime.UtcNow
+            };
             _context.LessonProgresses.Add(progress);
         }
         else
@@ -49,7 +65,11 @@ public class ProgressController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
-        return Ok(progress);
+        
+        progressDto.IsCompleted = true;
+        progressDto.CompletedAt = DateTime.UtcNow;
+        
+        return Ok(progressDto);
     }
 
     [HttpGet("{userId}/recommendation")]
@@ -61,7 +81,7 @@ public class ProgressController : ControllerBase
         
         // Simplified Logic: just mock progress percentage
         if (totalEnrolled > 0) progress = 45.0; 
-
+        
         var recommendation = await _aiClient.GetRecommendationAsync(userId, progress);
         return Ok(new { recommendation });
     }

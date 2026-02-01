@@ -1,5 +1,6 @@
 using IntelligentLMS.User.Data;
 using IntelligentLMS.User.Entities;
+using IntelligentLMS.Shared.DTOs.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +22,19 @@ public class UsersController : ControllerBase
     {
         var profile = await _context.UserProfiles.FindAsync(id);
         if (profile == null) return NotFound();
-        return Ok(profile);
+        
+        return Ok(new UserProfileDto 
+        { 
+            UserId = profile.UserId,
+            FullName = profile.FullName,
+            Bio = profile.Bio,
+            AvatarUrl = profile.AvatarUrl,
+            PhoneNumber = profile.PhoneNumber
+        });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UserProfile model)
+    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UserProfileDto model)
     {
         var profile = await _context.UserProfiles.FindAsync(id);
         if (profile == null)
@@ -40,6 +49,14 @@ public class UsersController : ControllerBase
         profile.PhoneNumber = model.PhoneNumber;
 
         await _context.SaveChangesAsync();
-        return Ok(profile);
+        
+        return Ok(new UserProfileDto 
+        { 
+            UserId = profile.UserId,
+            FullName = profile.FullName,
+            Bio = profile.Bio,
+            AvatarUrl = profile.AvatarUrl,
+            PhoneNumber = profile.PhoneNumber
+        });
     }
 }
