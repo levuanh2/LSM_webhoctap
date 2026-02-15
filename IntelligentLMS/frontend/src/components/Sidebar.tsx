@@ -1,136 +1,138 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion'; // Nạp linh hồn cho UI
 
-interface NavItem {
-  icon: string;
-  label: string;
-  path: string;
-  badge?: string;
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (val: boolean) => void;
 }
 
-const navItems: NavItem[] = [
-  { icon: 'dashboard', label: 'Tổng quan', path: '/user/dashboard' },
-  { icon: 'book_4', label: 'Khóa học của tôi', path: '/user/courses', badge: '12' },
-  { icon: 'auto_awesome', label: 'Lộ trình AI', path: '/user/learning-path' },
-  { icon: 'trophy', label: 'Thành tích', path: '/user/achievements', badge: '3' },
-  { icon: 'person', label: 'Hồ sơ', path: '/user/profile' },
-];
-
-const Sidebar = () => {
+const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
   const location = useLocation();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  const menuItems = [
+    { path: '/user/dashboard', icon: 'dashboard', label: 'Bàn học' },
+    { path: '/user/courses', icon: 'menu_book', label: 'Khóa học' },
+    { path: '/user/learning-path', icon: 'trending_up', label: 'Lộ trình' },
+    { path: '/user/achievements', icon: 'workspace_premium', label: 'Bảng vàng' },
+    { path: '/user/profile', icon: 'account_circle', label: 'Cá nhân' },
+  ];
 
   return (
-    <aside className="w-72 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col shadow-sm relative">
+    <motion.aside 
+      // Hiệu ứng co giãn có độ nhún (Spring Physics)
+      initial={false}
+      animate={{ width: isCollapsed ? 80 : 256 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0 z-50 shadow-sm overflow-hidden"
+    >
       
-      {/* Logo Section - Xanh Blue chủ đạo */}
-      <div className="p-8 flex items-center gap-3 relative z-10">
-        <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-200 transition-transform hover:scale-105">
-          <span className="material-symbols-outlined text-2xl">school</span>
-        </div>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-gray-800">
-            LMS <span className="text-blue-600">Platform</span>
-          </h1>
-          <p className="text-[10px] text-gray-400 font-medium tracking-widest uppercase">Intelligent Learning</p>
-        </div>
-      </div>
-
-      {/* Stats Card - Chuyển sang tông xanh dương dương nồng nàn */}
-      <div className="mx-6 mb-6 p-5 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-100 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium opacity-90">Tiến độ học tập</span>
-            <span className="material-symbols-outlined text-lg">trending_up</span>
-          </div>
-          <div className="flex items-baseline gap-1 mb-3">
-            <span className="text-3xl font-bold">68</span>
-            <span className="text-sm opacity-75">%</span>
-          </div>
-          <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-white h-full rounded-full transition-all duration-700" style={{ width: '68%' }}></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation - Trắng sạch, Hover xanh nhạt */}
-      <nav className="flex-1 px-4 space-y-1 relative z-10 overflow-y-auto custom-scrollbar">
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-4 py-3">
-          Menu chính
-        </p>
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onMouseEnter={() => setHoveredItem(item.path)}
-              onMouseLeave={() => setHoveredItem(null)}
-              className="block group"
+      {/* 1. BRANDING: DIEY ACADEMY */}
+      <div className={`h-20 flex items-center px-6 mb-4 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <AnimatePresence mode="wait">
+          {!isCollapsed && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex items-center gap-3 overflow-hidden"
             >
-              <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isActive
-                  ? 'bg-blue-50 text-blue-600 shadow-sm'
-                  : 'hover:bg-gray-50 text-gray-500 hover:text-gray-700'
-              }`}>
-                <span className={`material-symbols-outlined text-xl transition-colors ${
-                  isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'
-                }`}>
-                  {item.icon}
+              <div className="size-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100 ring-4 ring-blue-50">
+                <span className="material-symbols-outlined text-2xl">school</span>
+              </div>
+              <div className="flex flex-col min-w-[120px]">
+                <span className="font-black text-gray-800 tracking-tighter text-lg leading-tight uppercase">
+                  DIEY <span className="text-blue-600">ACADEMY</span>
                 </span>
-                <span className={`font-semibold text-sm flex-1 ${isActive ? 'text-blue-600' : ''}`}>
-                  {item.label}
-                </span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Education Hub</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-all"
+        >
+          <span className="material-symbols-outlined text-[24px]">
+            {isCollapsed ? 'last_page' : 'first_page'}
+          </span>
+        </motion.button>
+      </div>
 
-                {item.badge && (
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                    isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {item.badge}
-                  </span>
+      {/* 2. MENU: Hiệu ứng Hover & Active */}
+      <nav className="flex-1 px-3 space-y-1">
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link key={item.path} to={item.path} className="block relative group">
+              <motion.div
+                whileHover={{ x: 5 }} // Nhích nhẹ sang phải khi hover
+                className={`flex items-center gap-4 p-3.5 rounded-2xl transition-all relative ${
+                  isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                }`}
+              >
+                {isActive && (
+                  <motion.div 
+                    layoutId="activeTab" // Đồng bộ chuyển động vạch xanh giữa các tab
+                    className="absolute left-0 w-1 h-6 bg-blue-600 rounded-r-full" 
+                  />
                 )}
                 
-                {/* Active Indicator */}
-                {isActive && (
-                   <div className="absolute right-0 w-1 h-6 bg-blue-600 rounded-l-full"></div>
-                )}
-              </div>
+                <span className={`material-symbols-outlined text-[22px] transition-transform group-hover:scale-110 ${isActive ? 'fill-1' : ''}`}>
+                  {item.icon}
+                </span>
+
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.span 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className={`text-sm tracking-tight whitespace-nowrap ${isActive ? 'font-bold' : 'font-medium'}`}
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </Link>
           );
         })}
       </nav>
 
-      {/* User Profile - Nền xám cực nhẹ */}
-      <div className="p-6 border-t border-gray-50">
-        <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all group">
-          <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            NV
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate text-gray-800">Nguyễn Văn A</p>
-            <p className="text-[10px] text-blue-500 font-bold uppercase tracking-tight">Học viên Premium</p>
-          </div>
-          <button className="text-gray-300 hover:text-blue-600 transition-colors">
-            <span className="material-symbols-outlined text-xl">settings</span>
-          </button>
-        </div>
-
-        <button className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-red-400 hover:text-red-500 hover:bg-red-50 transition-all font-semibold text-xs group">
-          <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">logout</span>
-          <span>Đăng xuất</span>
-        </button>
-      </div>
-
-      {/* Scrollbar Xanh Blue nhạt */}
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #dbeafe; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #bfdbfe; }
-      `}</style>
-    </aside>
+      {/* 3. WIDGET TIẾN ĐỘ: Chuyển động dựa trên dữ liệu thật */}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="p-4 mx-4 mb-6 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-200 relative overflow-hidden group"
+          >
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Mã học viên</p>
+              <p className="text-sm font-black mb-3">#DIEY-2026</p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white/20 h-1 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: '68%' }} // Tiến độ hiện tại của Diey
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className="bg-white h-full" 
+                  />
+                </div>
+                <span className="text-[10px] font-bold">68%</span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined absolute -bottom-2 -right-2 text-6xl opacity-10 rotate-12 group-hover:rotate-0 transition-all duration-700">
+              auto_awesome
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.aside>
   );
 };
 

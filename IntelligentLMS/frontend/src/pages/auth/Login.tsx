@@ -1,149 +1,482 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
+// ─── Variants ──────────────────────────────────────────────────────────────
+const panelVariants: Variants = {
+  enter: (dir: number) => ({
+    x: dir > 0 ? 40 : -40,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 260, damping: 26 },
+  },
+  exit: (dir: number) => ({
+    x: dir > 0 ? -40 : 40,
+    opacity: 0,
+    transition: { duration: 0.18, ease: 'easeIn' },
+  }),
+};
+
+// password strength
+const getStrength = (pw: string) => {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 8) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  return s;
+};
+const STRENGTH_META = [
+  null,
+  { label: 'Yếu',      color: '#f87171' },
+  { label: 'Tạm được', color: '#fb923c' },
+  { label: 'Tốt',      color: '#a3e635' },
+  { label: 'Mạnh',     color: '#34d399' },
+];
+
+// ─── InputField ────────────────────────────────────────────────────────────
+interface InputProps {
+  label: string;
+  id: string;
+  type?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (v: string) => void;
+  icon: string;
+  suffix?: React.ReactNode;
+  extraClass?: string;
+}
+const InputField = ({ label, id, type = 'text', placeholder, value, onChange, icon, suffix, extraClass = '' }: InputProps) => (
+  <div className="space-y-1.5">
+    <label htmlFor={id} className="block text-[13px] font-semibold text-[#52525b]">
+      {label}
+    </label>
+    <div className="relative">
+      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#a1a1aa] pointer-events-none select-none">
+        {icon}
+      </span>
+      <input
+        id={id}
+        type={type}
+        required
+        value={value}
+        placeholder={placeholder}
+        onChange={e => onChange(e.target.value)}
+        className={`w-full pl-10 pr-10 py-3 rounded-xl text-[14px] text-[#18181b] bg-[#f4f4f5] border border-transparent
+          placeholder-[#a1a1aa] outline-none transition-all duration-150
+          focus:bg-white focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)] ${extraClass}`}
+      />
+      {suffix}
+    </div>
+  </div>
+);
+
+// ─── Main ──────────────────────────────────────────────────────────────────
 const Login = () => {
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const [[tab, dir], setTab] = useState<['login' | 'register', number]>(['login', 0]);
+
+  const switchTab = (next: 'login' | 'register') => {
+    if (next === tab) return;
+    setTab([next, next === 'register' ? 1 : -1]);
+  };
+
+  // login
+  const [lEmail, setLEmail]   = useState('');
+  const [lPw, setLPw]         = useState('');
+  const [showLPw, setShowLPw] = useState(false);
+  const [remember, setRemember] = useState(false);
+
+  // register
+  const [rName, setRName]     = useState('');
+  const [rEmail, setREmail]   = useState('');
+  const [rPw, setRPw]         = useState('');
+  const [rCf, setRCf]         = useState('');
+  const [showRPw, setShowRPw] = useState(false);
+  const [showRCf, setShowRCf] = useState(false);
+  const [agree, setAgree]     = useState(false);
+
+  const strength = getStrength(rPw);
+  const match    = rCf !== '' && rPw === rCf;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate('/user/dashboard');
+  };
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agree) return;
+    navigate('/user/dashboard');
+  };
+
+  const EyeToggle = ({ show, onToggle }: { show: boolean; onToggle: () => void }) => (
+    <button
+      type="button"
+      tabIndex={-1}
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a1a1aa] hover:text-[#6366f1] transition-colors"
+    >
+      <span className="material-symbols-outlined text-[18px]">
+        {show ? 'visibility_off' : 'visibility'}
+      </span>
+    </button>
+  );
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      {/* Logo & Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-indigo-500/30">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-          Chào mừng trở lại
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">Đăng nhập để tiếp tục</p>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
 
-      {/* Form Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-        <form className="space-y-5">
-          {/* Email Input */}
-          <div className="group">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
-              </div>
-              <input 
-                className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/50 focus:bg-white dark:focus:bg-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
-                placeholder="name@company.com"
-                type="email"
-              />
-            </div>
-          </div>
+        .auth-wrap { font-family: 'Sora', sans-serif; }
 
-          {/* Password Input */}
-          <div className="group">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                Mật khẩu
-              </label>
-              <a className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors" href="#">
-                Quên mật khẩu?
-              </a>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+        .dot-bg {
+          background-color: #fafafa;
+          background-image: radial-gradient(#e4e4e7 1px, transparent 1px);
+          background-size: 24px 24px;
+        }
+
+        .auth-card {
+          background: #ffffff;
+          border: 1px solid #e4e4e7;
+          border-radius: 20px;
+          box-shadow: 0 4px 32px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+        }
+
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        .ring-spin { animation: spin-slow 12s linear infinite; }
+
+        .tab-pill {
+          background: #f4f4f5;
+          border-radius: 10px;
+          padding: 4px;
+          position: relative;
+          display: flex;
+        }
+        .tab-btn {
+          position: relative; z-index: 1;
+          flex: 1;
+          padding: 7px 20px;
+          border-radius: 7px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #71717a;
+          transition: color 0.2s;
+          cursor: pointer;
+          border: none; background: transparent;
+          font-family: 'Sora', sans-serif;
+        }
+        .tab-btn.active { color: #18181b; }
+
+        .btn-submit {
+          width: 100%;
+          padding: 13px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #fff;
+          background: #18181b;
+          border: none;
+          cursor: pointer;
+          font-family: 'Sora', sans-serif;
+          transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        }
+        .btn-submit:hover   { background: #27272a; box-shadow: 0 4px 20px rgba(0,0,0,0.22); }
+        .btn-submit:active  { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .btn-social {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; padding: 11px;
+          border-radius: 10px;
+          border: 1.5px solid #e4e4e7;
+          background: #fff;
+          font-size: 13px; font-weight: 600; color: #3f3f46;
+          cursor: pointer; font-family: 'Sora', sans-serif;
+          transition: border-color 0.15s, background 0.15s, transform 0.12s;
+        }
+        .btn-social:hover { border-color: #a1a1aa; background: #fafafa; transform: translateY(-1px); }
+
+        .divider { display: flex; align-items: center; gap: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e4e4e7; }
+        .divider span { font-size: 11px; color: #a1a1aa; font-weight: 500; white-space: nowrap; }
+
+        .strength-track { height: 3px; background: #f4f4f5; border-radius: 99px; overflow: hidden; }
+        .strength-fill  {
+          height: 100%; border-radius: 99px;
+          transition: width 0.35s cubic-bezier(0.34,1.56,0.64,1), background-color 0.3s;
+        }
+
+        input[type=checkbox].cbox {
+          appearance: none; -webkit-appearance: none;
+          width: 17px; height: 17px; border-radius: 5px;
+          border: 1.5px solid #d4d4d8; background: #fff;
+          cursor: pointer; flex-shrink: 0; margin-top: 1px;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        input[type=checkbox].cbox:checked {
+          background: #18181b; border-color: #18181b;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+        }
+      `}</style>
+
+      <div className="auth-wrap dot-bg min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[400px] space-y-6">
+
+          {/* ── Logo ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="flex flex-col items-center gap-3"
+          >
+            <div className="relative w-14 h-14">
+              <svg viewBox="0 0 56 56" className="ring-spin absolute inset-0 w-full h-full" fill="none">
+                <circle cx="28" cy="28" r="26" stroke="#e4e4e7" strokeWidth="1.5" strokeDasharray="5 5" />
+              </svg>
+              <div className="absolute inset-2 rounded-full bg-[#18181b] flex items-center justify-center">
+                <span className="material-symbols-outlined text-white text-2xl">school</span>
               </div>
-              <input 
-                className="w-full h-12 pl-12 pr-12 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/50 focus:bg-white dark:focus:bg-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
-                placeholder="••••••••"
-                type={showPassword ? "text" : "password"}
+            </div>
+            <div className="text-center">
+              <p className="text-[15px] font-semibold text-[#18181b]">LMS Platform</p>
+              <p className="text-[12px] text-[#a1a1aa] mt-0.5">
+                Học tập thông minh cùng <span className="text-[#6366f1] font-semibold">Diey</span>
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── Card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.08 }}
+            className="auth-card p-7"
+          >
+            {/* ── Tabs ── */}
+            <div className="tab-pill mb-7">
+              <motion.div
+                layoutId="tab-thumb"
+                style={{
+                  position: 'absolute',
+                  top: 4, bottom: 4,
+                  width: '50%',
+                  borderRadius: 7,
+                  background: '#fff',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+                }}
+                animate={{ left: tab === 'login' ? '4px' : 'calc(50%)' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
-              <button 
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
+              <button className={`tab-btn ${tab === 'login' ? 'active' : ''}`} onClick={() => switchTab('login')}>
+                Đăng nhập
+              </button>
+              <button className={`tab-btn ${tab === 'register' ? 'active' : ''}`} onClick={() => switchTab('register')}>
+                Đăng ký
               </button>
             </div>
-          </div>
 
-          {/* Remember Me */}
-          <div className="flex items-center">
-            <input 
-              type="checkbox" 
-              id="remember" 
-              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
-            />
-            <label htmlFor="remember" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-              Ghi nhớ đăng nhập
-            </label>
-          </div>
+            {/* ── Forms ── */}
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait" custom={dir}>
 
-          {/* Login Button */}
-          <button 
-            className="w-full h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-            type="submit"
+                {/* ════ LOGIN ════ */}
+                {tab === 'login' && (
+                  <motion.form
+                    key="login"
+                    custom={dir}
+                    variants={panelVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    onSubmit={handleLogin}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <p className="text-[15px] font-semibold text-[#18181b]">Chào mừng trở lại</p>
+                      <p className="text-[12px] text-[#a1a1aa] mt-0.5">Tiếp tục hành trình học tập của bạn</p>
+                    </div>
+
+                    <InputField
+                      id="l-email" label="Email" type="email" icon="mail"
+                      placeholder="diey@example.com"
+                      value={lEmail} onChange={setLEmail}
+                    />
+
+                    <InputField
+                      id="l-pw" label="Mật khẩu"
+                      type={showLPw ? 'text' : 'password'} icon="lock"
+                      placeholder="Nhập mật khẩu"
+                      value={lPw} onChange={setLPw}
+                      suffix={<EyeToggle show={showLPw} onToggle={() => setShowLPw(v => !v)} />}
+                    />
+
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" className="cbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
+                        <span className="text-[13px] text-[#52525b]">Ghi nhớ tôi</span>
+                      </label>
+                      <a href="#" className="text-[12px] font-semibold text-[#6366f1] hover:underline">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" className="btn-submit">Đăng nhập</button>
+
+                    <div className="divider"><span>hoặc đăng nhập với</span></div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button type="button" className="btn-social">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="" />
+                        Google
+                      </button>
+                      <button type="button" className="btn-social">
+                        <img src="https://www.svgrepo.com/show/448234/microsoft.svg" className="w-4 h-4" alt="" />
+                        Microsoft
+                      </button>
+                    </div>
+
+                    <p className="text-center text-[12px] text-[#a1a1aa]">
+                      Chưa có tài khoản?{' '}
+                      <button type="button" onClick={() => switchTab('register')} className="text-[#6366f1] font-semibold hover:underline">
+                        Đăng ký
+                      </button>
+                    </p>
+                  </motion.form>
+                )}
+
+                {/* ════ REGISTER ════ */}
+                {tab === 'register' && (
+                  <motion.form
+                    key="register"
+                    custom={dir}
+                    variants={panelVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    onSubmit={handleRegister}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <p className="text-[15px] font-semibold text-[#18181b]">Tạo tài khoản</p>
+                      <p className="text-[12px] text-[#a1a1aa] mt-0.5">Miễn phí, không cần thẻ tín dụng</p>
+                    </div>
+
+                    <InputField
+                      id="r-name" label="Họ và tên" icon="person"
+                      placeholder="Nguyễn Văn A"
+                      value={rName} onChange={setRName}
+                    />
+
+                    <InputField
+                      id="r-email" label="Email" type="email" icon="mail"
+                      placeholder="diey@example.com"
+                      value={rEmail} onChange={setREmail}
+                    />
+
+                    {/* Password + strength */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="r-pw" className="block text-[13px] font-semibold text-[#52525b]">Mật khẩu</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#a1a1aa] pointer-events-none">lock</span>
+                        <input
+                          id="r-pw"
+                          type={showRPw ? 'text' : 'password'}
+                          required
+                          value={rPw}
+                          placeholder="Ít nhất 8 ký tự"
+                          onChange={e => setRPw(e.target.value)}
+                          className="w-full pl-10 pr-10 py-3 rounded-xl text-[14px] text-[#18181b] bg-[#f4f4f5] border border-transparent
+                            placeholder-[#a1a1aa] outline-none transition-all
+                            focus:bg-white focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+                        />
+                        <EyeToggle show={showRPw} onToggle={() => setShowRPw(v => !v)} />
+                      </div>
+                      {rPw && (
+                        <div className="space-y-1 pt-0.5">
+                          <div className="strength-track">
+                            <div
+                              className="strength-fill"
+                              style={{
+                                width: `${(strength / 4) * 100}%`,
+                                backgroundColor: STRENGTH_META[strength]?.color ?? '#f87171',
+                              }}
+                            />
+                          </div>
+                          <p className="text-[11px] font-medium" style={{ color: STRENGTH_META[strength]?.color }}>
+                            {STRENGTH_META[strength]?.label}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="r-cf" className="block text-[13px] font-semibold text-[#52525b]">Xác nhận mật khẩu</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#a1a1aa] pointer-events-none">lock_reset</span>
+                        <input
+                          id="r-cf"
+                          type={showRCf ? 'text' : 'password'}
+                          required
+                          value={rCf}
+                          placeholder="Nhập lại mật khẩu"
+                          onChange={e => setRCf(e.target.value)}
+                          className={`w-full pl-10 pr-10 py-3 rounded-xl text-[14px] text-[#18181b] bg-[#f4f4f5] placeholder-[#a1a1aa] outline-none transition-all border
+                            ${rCf
+                              ? match
+                                ? 'border-[#34d399] focus:shadow-[0_0_0_3px_rgba(52,211,153,0.12)]'
+                                : 'border-[#f87171] focus:shadow-[0_0_0_3px_rgba(248,113,113,0.12)]'
+                              : 'border-transparent focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]'
+                            } focus:bg-white`}
+                        />
+                        <EyeToggle show={showRCf} onToggle={() => setShowRCf(v => !v)} />
+                      </div>
+                      {rCf && !match && (
+                        <p className="text-[11px] text-[#f87171] font-medium">Mật khẩu không khớp</p>
+                      )}
+                    </div>
+
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input type="checkbox" className="cbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
+                      <span className="text-[12px] text-[#52525b] leading-relaxed">
+                        Tôi đồng ý với{' '}
+                        <a href="#" className="text-[#6366f1] font-semibold hover:underline">Điều khoản dịch vụ</a>
+                        {' '}và{' '}
+                        <a href="#" className="text-[#6366f1] font-semibold hover:underline">Chính sách bảo mật</a>
+                      </span>
+                    </label>
+
+                    <button type="submit" disabled={!agree} className="btn-submit">
+                      Tạo tài khoản
+                    </button>
+
+                    <p className="text-center text-[12px] text-[#a1a1aa]">
+                      Đã có tài khoản?{' '}
+                      <button type="button" onClick={() => switchTab('login')} className="text-[#6366f1] font-semibold hover:underline">
+                        Đăng nhập
+                      </button>
+                    </p>
+                  </motion.form>
+                )}
+
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-center text-[11px] text-[#d4d4d8]"
           >
-            Đăng nhập ngay
-          </button>
-
-          {/* Divider */}
-          <div className="relative flex items-center py-4">
-            <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-            <span className="mx-4 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              Hoặc tiếp tục với
-            </span>
-            <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-          </div>
-
-          {/* Social Login */}
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              className="group flex items-center justify-center gap-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl h-12 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-200"
-              type="button"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Google</span>
-            </button>
-            <button 
-              className="group flex items-center justify-center gap-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl h-12 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-200"
-              type="button"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#00A4EF">
-                <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/>
-              </svg>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Microsoft</span>
-            </button>
-          </div>
-        </form>
+            © 2026 LMS Platform
+          </motion.p>
+        </div>
       </div>
-
-      {/* Sign Up Link */}
-      <p className="text-center mt-6 text-sm text-gray-600 dark:text-gray-400">
-        Chưa có tài khoản?{' '}
-        <a href="#" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
-          Đăng ký ngay
-        </a>
-      </p>
-    </div>
+    </>
   );
 };
 
