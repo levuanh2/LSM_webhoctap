@@ -27,8 +27,21 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser());
 });
 
+// Swagger configuration
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Configure Kestrel to listen on port 8080
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080);
+});
+
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapGet("/test", () => "Gateway working!");
 app.UseAuthentication();
 app.UseAuthorization();
 

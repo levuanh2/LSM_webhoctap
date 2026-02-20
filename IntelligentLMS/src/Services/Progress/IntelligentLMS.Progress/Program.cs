@@ -24,10 +24,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
+// Database initialization and seeding
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ProgressDbContext>();
     db.Database.EnsureCreated();
+    await DbInitializer.SeedAsync(db);
 }
 
 app.Run();

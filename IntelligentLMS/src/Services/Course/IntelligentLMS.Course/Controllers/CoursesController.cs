@@ -1,8 +1,12 @@
 using IntelligentLMS.Course.Data;
 using IntelligentLMS.Course.Entities;
-using IntelligentLMS.Shared.DTOs.Courses;
+using IntelligentLMS.Course.Application.Interfaces;
+using IntelligentLMS.Course.Application.DTOs;
+using IntelligentLMS.Shared.Events;
+using SharedDTOs = IntelligentLMS.Shared.DTOs.Courses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using CourseEntity = IntelligentLMS.Course.Entities.Course;
 
 namespace IntelligentLMS.Course.Controllers;
 
@@ -11,17 +15,21 @@ namespace IntelligentLMS.Course.Controllers;
 public class CoursesController : ControllerBase
 {
     private readonly CourseDbContext _context;
+    private readonly IEventPublisher _eventPublisher;
 
-    public CoursesController(CourseDbContext context)
+    public CoursesController(CourseDbContext context, IEventPublisher eventPublisher)
     {
         _context = context;
+        _eventPublisher = eventPublisher;
     }
+
+
 
     [HttpGet]
     public async Task<IActionResult> GetCourses()
     {
         var courses = await _context.Courses.ToListAsync();
-        var courseDtos = courses.Select(c => new CourseDto
+        var courseDtos = courses.Select(c => new SharedDTOs.CourseDto
         {
             Id = c.Id,
             Title = c.Title,
@@ -42,10 +50,10 @@ public class CoursesController : ControllerBase
             
         if (course == null) return NotFound();
 
-        // Note: CourseDto doesn't currently support Lessons list, so we might lose lessons here unless we extend DTO.
+        // Note: SharedDTOs.CourseDto doesn't currently support Lessons list, so we might lose lessons here unless we extend DTO.
         // For now adhering to strict DTO definition from request.
         // Ideally we should have CourseDetailDto.
-        var courseDto = new CourseDto
+        var courseDto = new SharedDTOs.CourseDto
         {
             Id = course.Id,
             Title = course.Title,
@@ -61,7 +69,7 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest request)
     {
         // In a real app, get InstructorId from JWT claims
-        var course = new Entities.Course
+        var course = new CourseEntity
         {
             Title = request.Title,
             Description = request.Description,
@@ -73,7 +81,7 @@ public class CoursesController : ControllerBase
         _context.Courses.Add(course);
         await _context.SaveChangesAsync();
 
-        var courseDto = new CourseDto
+        var courseDto = new SharedDTOs.CourseDto
         {
             Id = course.Id,
             Title = course.Title,
@@ -118,4 +126,26 @@ public class CoursesController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpPost("{id}/enroll")]
+    public async Task<IActionResult> EnrollCourse(Guid id, [FromBody] Guid userId)
+    {
+        var course = await _context.Courses.FindAsync(id);
+        if (course == null) return NotFound("Course not found");
+
+        // Logic to enroll user in DB would go here (e.g. UserCourse table)
+        // For now, we focus on publishing the event
+
+        var enrollmentEvent = new CourseEnrolledEvent(
+            EnrollmentId: Guid.NewGuid(),
+            UserId: userId,
+            CourseId: id,
+            Timestamp: DateTime.UtcNow
+        );
+
+        await _eventPublisher.PublishAsync("course-enrolled", enrollmentEvent);
+
+        return Ok(new { Message = "Enrolled successfully", CourseId = id });
+    }
+
 }
