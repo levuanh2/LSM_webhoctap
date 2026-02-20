@@ -1,24 +1,48 @@
-const CourseCard = ({ title, price, tag, author }: any) => {
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+// Định nghĩa Props bao gồm cả 'id'
+interface CourseCardProps {
+  id: string; // Thêm id ở đây
+  title: string;
+  price: string;
+  tag: string;
+  author: string;
+}
+
+const CourseCard = ({ id, title, price, tag, author }: CourseCardProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div className="h-44 bg-gray-100 relative">
-        <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded">BÁN CHẠY</span>
-      </div>
-      <div className="p-4">
-        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{tag}</span>
-        <h3 className="font-bold text-gray-900 mt-1 line-clamp-2 h-12 leading-snug">{title}</h3>
-        <p className="text-xs text-gray-400 mt-2">Giảng viên: <span className="text-gray-700 font-medium">{author}</span></p>
-        <div className="flex items-center gap-1 mt-3 text-yellow-500">
-           <span className="material-symbols-outlined text-[16px]">star</span>
-           <span className="text-xs font-bold text-gray-700">4.9</span>
-           <span className="text-xs text-gray-400">(2.4k)</span>
+    // Bọc toàn bộ Card hoặc nút bấm bằng thẻ Link
+    <Link to={`/user/course/${id}`}> 
+      <motion.div 
+        whileHover={{ y: -8 }}
+        className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+      >
+        <div className="aspect-video bg-gray-100 rounded-2xl mb-4 overflow-hidden relative">
+          <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-all" />
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <span className="material-symbols-outlined text-5xl">image</span>
+          </div>
         </div>
-        <div className="mt-4 flex items-center justify-between border-t pt-4">
-           <span className="font-bold text-blue-700 text-lg">{price}</span>
-           <button className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700">Xem chi tiết</button>
+
+        <div className="space-y-3">
+          <span className="px-2.5 py-1 bg-blue-50 text-blue-600 text-[10px] font-black rounded-lg uppercase tracking-wider">
+            {tag}
+          </span>
+          <h3 className="font-bold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            {title}
+          </h3>
+          <p className="text-xs text-gray-400 font-medium">Giảng viên: {author}</p>
+          
+          <div className="pt-3 border-t border-gray-50 flex justify-between items-center">
+            <span className="text-sm font-black text-blue-600">{price}</span>
+            <span className="material-symbols-outlined text-gray-300 group-hover:text-blue-600 transition-all">
+              arrow_forward
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </Link>
   );
 };
 
