@@ -1,13 +1,35 @@
 using IntelligentLMS.Course.Data;
+using IntelligentLMS.Course.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.Json.Serialization;
 using IntelligentLMS.Course.Infrastructure.Messaging;
 using IntelligentLMS.Course.Application.Interfaces;
 using IntelligentLMS.Shared.Events;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "intelligent-lms",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "intelligent-lms",
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "super_secret_key_for_intelligent_lms_dev_12345"))
+        };
+    });
+builder.Services.AddAuthorization();
+
+builder.Services.AddSingleton<VnpayService>();
+builder.Services.AddHttpClient<IProgressServiceClient, ProgressServiceClient>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -45,6 +67,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

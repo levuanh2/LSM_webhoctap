@@ -72,6 +72,15 @@ services:
       - Kafka__BootstrapServers=kafka:9092
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_course;Username=admin;Password=password
       - Redis__ConnectionString=redis:6379
+      - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
+      - Jwt__Issuer=intelligent-lms
+      - Jwt__Audience=intelligent-lms
+      - Vnpay__TmnCode=65NHND8M
+      - Vnpay__HashSecret=YRXFVQH3DUKOB8WSCY9R9MOE1DBMFKNR
+      - Vnpay__Url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      - Vnpay__ReturnUrl=http://localhost:5000/payments/vnpay/return
+      - ProgressServiceUrl=http://progress-service:8080
+      - FrontendBaseUrl=http://localhost:5173
 
     depends_on:
       - postgres

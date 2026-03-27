@@ -154,7 +154,11 @@ const Courses = () => {
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                   {tag}
                 </span>
-                <span className="text-[10px] font-bold text-gray-400">{lessonsText}</span>
+                <span className="text-[10px] font-bold text-gray-400">
+                  {course.price > 0
+                    ? `${course.price.toLocaleString('vi-VN')} đ`
+                    : 'Miễn phí'}
+                </span>
               </div>
 
               <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 h-10">

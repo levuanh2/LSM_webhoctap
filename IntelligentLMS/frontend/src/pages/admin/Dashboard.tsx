@@ -10,7 +10,7 @@ import {
   TextField,
   MenuItem,
 } from '@mui/material';
-import { adminAuthApi, AdminUserRow } from '../../services/api';
+import { adminAuthApi, AdminUserRow, courseApi } from '../../services/api';
 
 // ─── Animation Variants ───────────────────────────────────────
 const containerVariants: Variants = {
@@ -98,60 +98,10 @@ const LiveTicker = () => {
 
 // ─── Main Component ────────────────────────────────────────────
 const AdminDashboard = () => {
-  const stats = [
-    {
-      label: 'Tổng học viên',
-      value: '12,540',
-      delta: '+8.2%',
-      positive: true,
-      icon: 'group',
-      accent: '#3b82f6',
-      spark: [30, 45, 38, 60, 52, 70, 65, 80, 74, 90],
-    },
-    {
-      label: 'Khóa học hoạt động',
-      value: '48',
-      delta: '+3',
-      positive: true,
-      icon: 'auto_stories',
-      accent: '#a855f7',
-      spark: [20, 28, 35, 30, 45, 40, 50, 48, 55, 48],
-    },
-    {
-      label: 'Doanh thu tháng',
-      value: '$12,400',
-      delta: '+14.5%',
-      positive: true,
-      icon: 'payments',
-      accent: '#10b981',
-      spark: [50, 40, 60, 55, 75, 65, 80, 70, 90, 85],
-    },
-    {
-      label: 'Yêu cầu hỗ trợ',
-      value: '12',
-      delta: '-3',
-      positive: false,
-      icon: 'support_agent',
-      accent: '#f43f5e',
-      spark: [20, 18, 22, 15, 18, 12, 16, 10, 14, 12],
-    },
-  ];
-
-  const services = [
-    { name: 'Auth Service', status: 'online', latency: '12ms', uptime: 99.9, color: '#10b981' },
-    { name: 'Course API', status: 'online', latency: '28ms', uptime: 99.4, color: '#10b981' },
-    { name: 'AI Advisor', status: 'online', latency: '145ms', uptime: 97.8, color: '#f59e0b' },
-    { name: 'Media CDN', status: 'online', latency: '8ms', uptime: 99.9, color: '#10b981' },
-    { name: 'Analytics', status: 'degraded', latency: '320ms', uptime: 94.2, color: '#f43f5e' },
-  ];
-
-  const recentActivity = [
-    { user: 'Trần Thị B', action: 'đăng ký khóa học React Advanced', time: '2 phút trước', type: 'enroll' },
-    { user: 'Lê Văn C', action: 'hoàn thành TypeScript Mastery', time: '15 phút trước', type: 'complete' },
-    { user: 'Phạm Thị D', action: 'gửi yêu cầu hỗ trợ #1042', time: '28 phút trước', type: 'support' },
-    { user: 'Nguyễn Văn E', action: 'thanh toán gói Premium 1 năm', time: '1 giờ trước', type: 'payment' },
-    { user: 'Đinh Thị F', action: 'đăng ký khóa học Node.js', time: '2 giờ trước', type: 'enroll' },
-  ];
+  const [stats, setStats] = useState<Array<{ label: string; value: string; delta: string; positive: boolean; icon: string; accent: string; spark: number[] }>>([]);
+  const [services, setServices] = useState<Array<{ name: string; status: string; latency: string; uptime: number; color: string }>>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{ user: string; action: string; time: string; type: string }>>([]);
+  const [topCourses, setTopCourses] = useState<Array<{ name: string; students: number; pct: number }>>([]);
 
   const activityColor: Record<string, string> = {
     enroll: '#3b82f6',
@@ -187,6 +137,75 @@ const AdminDashboard = () => {
     isLocked: false,
   });
 
+  const formatRelativeTime = (iso?: string) => {
+    if (!iso) return 'vừa xong';
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.max(1, Math.floor(diffMs / 60000));
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    return `${Math.floor(hours / 24)} ngày trước`;
+  };
+
+  const loadDashboardData = async () => {
+    try {
+      const [allUsersRes, studentsRes, coursesRes] = await Promise.all([
+        adminAuthApi.listUsers(),
+        adminAuthApi.listUsers('Student'),
+        courseApi.getCourses(),
+      ]);
+      const users = allUsersRes.data || [];
+      const students = studentsRes.data || [];
+      const courses = coursesRes.data || [];
+
+      const enrollCounts = new Map<string, number>();
+      await Promise.all(
+        students.map(async (s) => {
+          try {
+            const enr = await courseApi.getEnrollments(s.id);
+            (enr.data || []).forEach((e) => enrollCounts.set(e.courseId, (enrollCounts.get(e.courseId) || 0) + 1));
+          } catch {
+            // ignore per-user progress failures
+          }
+        })
+      );
+
+      const paidCourses = courses.filter((c) => (c.price || 0) > 0);
+      const estimatedRevenue = paidCourses.reduce((sum, c) => sum + (c.price || 0) * (enrollCounts.get(c.id) || 0), 0);
+      const activeTeachers = users.filter((u) => u.role?.toLowerCase() === 'teacher' && !u.isLocked).length;
+
+      setStats([
+        { label: 'Tổng học viên', value: students.length.toLocaleString('vi-VN'), delta: `${users.length} users`, positive: true, icon: 'group', accent: '#3b82f6', spark: [20, 32, 29, 40, 45, 48, 52, 56, 60, 65] },
+        { label: 'Khóa học hoạt động', value: courses.length.toLocaleString('vi-VN'), delta: `${paidCourses.length} trả phí`, positive: true, icon: 'auto_stories', accent: '#a855f7', spark: [18, 20, 24, 26, 27, 30, 33, 35, 36, 38] },
+        { label: 'Doanh thu ước tính', value: `${estimatedRevenue.toLocaleString('vi-VN')} đ`, delta: `${Array.from(enrollCounts.values()).reduce((a, b) => a + b, 0)} enrollments`, positive: true, icon: 'payments', accent: '#10b981', spark: [10, 15, 22, 30, 34, 40, 48, 52, 58, 64] },
+        { label: 'Giảng viên hoạt động', value: activeTeachers.toLocaleString('vi-VN'), delta: `${users.length - activeTeachers} tài khoản khác`, positive: true, icon: 'support_agent', accent: '#f43f5e', spark: [14, 18, 17, 20, 19, 21, 24, 23, 25, 26] },
+      ]);
+
+      setServices([
+        { name: 'Auth Service', status: 'online', latency: 'real-time', uptime: 99.5, color: '#10b981' },
+        { name: 'Course API', status: 'online', latency: 'real-time', uptime: 99.5, color: '#10b981' },
+        { name: 'Progress API', status: 'online', latency: 'real-time', uptime: 99.5, color: '#10b981' },
+        { name: 'Gateway', status: 'online', latency: 'real-time', uptime: 99.9, color: '#10b981' },
+      ]);
+
+      const activities = users
+        .slice()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5)
+        .map((u) => ({ user: u.fullName || u.email, action: `tạo tài khoản ${u.role}`, time: formatRelativeTime(u.createdAt), type: 'enroll' }));
+      setRecentActivity(activities);
+
+      const top = courses
+        .map((c) => ({ name: c.title, students: enrollCounts.get(c.id) || 0 }))
+        .sort((a, b) => b.students - a.students)
+        .slice(0, 5)
+        .map((c, i) => ({ ...c, pct: Math.max(10, 100 - i * 15) }));
+      setTopCourses(top);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const loadTeachers = async () => {
     setTeacherLoading(true);
     try {
@@ -202,6 +221,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadTeachers();
+    loadDashboardData();
   }, []);
 
   const teacherFiltered = (() => {
@@ -533,13 +553,9 @@ const AdminDashboard = () => {
               <h2 className="font-black text-sm uppercase tracking-widest">Top khóa học</h2>
             </div>
 
-            {[
-              { name: 'React & TypeScript', students: 1240, pct: 92 },
-              { name: 'Node.js Backend', students: 980, pct: 73 },
-              { name: 'UI/UX Design', students: 860, pct: 64 },
-              { name: 'Python Machine Learning', students: 740, pct: 55 },
-              { name: 'Flutter Mobile', students: 610, pct: 45 },
-            ].map((c, i) => (
+            {(topCourses.length > 0 ? topCourses : [
+              { name: 'Chưa có dữ liệu', students: 0, pct: 10 },
+            ]).map((c, i) => (
               <div key={i} className="flex items-center gap-3 mb-4 last:mb-0">
                 <span className="text-xs font-black text-gray-600 w-4 tabular-nums">
                   {i + 1}

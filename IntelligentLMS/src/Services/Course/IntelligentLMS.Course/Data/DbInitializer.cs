@@ -41,6 +41,7 @@ public static class DbInitializer
             Category = "Backend Development",
             InstructorId = instructorId,
             CreatedAt = DateTime.UtcNow.AddDays(-60),
+            Price = 499000,
             Lessons = new List<Lesson>
             {
                 new Lesson
@@ -116,6 +117,7 @@ public static class DbInitializer
             Category = "Frontend Development",
             InstructorId = instructorId,
             CreatedAt = DateTime.UtcNow.AddDays(-50),
+            Price = 399000,
             Lessons = new List<Lesson>
             {
                 new Lesson
@@ -181,6 +183,7 @@ public static class DbInitializer
             Category = "Backend Development",
             InstructorId = instructorId,
             CreatedAt = DateTime.UtcNow.AddDays(-40),
+            Price = 0,
             Lessons = new List<Lesson>
             {
                 new Lesson
@@ -236,6 +239,7 @@ public static class DbInitializer
             Category = "Database",
             InstructorId = instructorId,
             CreatedAt = DateTime.UtcNow.AddDays(-30),
+            Price = 299000,
             Lessons = new List<Lesson>
             {
                 new Lesson
@@ -301,6 +305,7 @@ public static class DbInitializer
             Category = "Security",
             InstructorId = instructorId,
             CreatedAt = DateTime.UtcNow.AddDays(-20),
+            Price = 0,
             Lessons = new List<Lesson>
             {
                 new Lesson

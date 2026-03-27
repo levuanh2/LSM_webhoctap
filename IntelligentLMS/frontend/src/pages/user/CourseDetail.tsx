@@ -1,7 +1,7 @@
 import { motion, Variants } from 'framer-motion';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { courseApi, CourseDetailDto } from '../../services/api';
+import { courseApi, paymentApi, CourseDetailDto } from '../../services/api';
 import type { CourseDto } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
 
@@ -47,6 +47,7 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -172,7 +173,11 @@ const CourseDetail = () => {
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-2xl font-black text-blue-600">Miễn phí</span>
+                <span className="text-2xl font-black text-blue-600">
+                  {course?.price && course.price > 0
+                    ? `${course.price.toLocaleString('vi-VN')} đ`
+                    : 'Miễn phí'}
+                </span>
               </div>
               
               {isAuthenticated() ? (
@@ -183,6 +188,29 @@ const CourseDetail = () => {
                   >
                     VÀO HỌC NGAY
                   </Link>
+                ) : course?.price && course.price > 0 ? (
+                  <button
+                    type="button"
+                    disabled={paying || !user || !id}
+                    onClick={async () => {
+                      if (!user || !id) return;
+                      setPaying(true);
+                      try {
+                        const res = await paymentApi.createVnpayUrl(id);
+                        const url = res.data?.paymentUrl;
+                        if (url) window.location.href = url;
+                        else alert('Không thể tạo link thanh toán.');
+                      } catch (err: any) {
+                        const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Không thể tạo link thanh toán.';
+                        alert(typeof msg === 'string' ? msg : 'Không thể tạo link thanh toán.');
+                      } finally {
+                        setPaying(false);
+                      }
+                    }}
+                    className="block w-full py-4 bg-amber-500 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-amber-100 hover:bg-amber-600 transition-all disabled:bg-gray-400"
+                  >
+                    {paying ? 'ĐANG CHUYỂN...' : 'THANH TOÁN VNPAY & GHI DANH'}
+                  </button>
                 ) : (
                   <button
                     type="button"

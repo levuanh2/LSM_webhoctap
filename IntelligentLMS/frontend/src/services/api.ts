@@ -16,6 +16,7 @@ export interface CourseDto {
   level: string;
   category: string;
   instructorId: string;
+  price: number;
 }
 
 export interface LessonDto {
@@ -30,6 +31,14 @@ export interface LessonDto {
 
 export interface CourseDetailDto extends CourseDto {
   lessons: LessonDto[];
+}
+
+export interface CourseUpsertRequest {
+  title: string;
+  description: string;
+  level: string;
+  category: string;
+  price: number;
 }
 
 // 2. Định nghĩa cấu trúc dữ liệu cho Progress (Dữ liệu từ Progress Service)
@@ -103,6 +112,7 @@ export const userApi = {
 export const courseApi = {
   // Gateway: /courses/* -> course service /api/courses/*
   getCourses: () => api.get<CourseDto[]>(`/courses`),
+  getMyCourses: () => api.get<CourseDto[]>(`/courses/me`),
 
   // Course detail + lessons (endpoint bổ sung ở Course service)
   getCourseDetail: (courseId: string) => api.get<CourseDetailDto>(`/courses/${courseId}/detail`),
@@ -138,4 +148,16 @@ export const courseApi = {
       lessonId: data.lessonId,
       courseId: data.courseId,
     }),
+};
+
+// --- PAYMENT API (VNPAY) ---
+export const paymentApi = {
+  createVnpayUrl: (courseId: string) =>
+    api.post<{ paymentUrl: string; courseId: string }>('/payments/vnpay/create', { courseId }),
+};
+
+export const adminCourseApi = {
+  createCourse: (data: CourseUpsertRequest) => api.post<CourseDto>('/courses', data),
+  updateCourse: (id: string, data: CourseUpsertRequest) => api.put<CourseDto>(`/courses/${id}`, data),
+  deleteCourse: (id: string) => api.delete(`/courses/${id}`),
 };

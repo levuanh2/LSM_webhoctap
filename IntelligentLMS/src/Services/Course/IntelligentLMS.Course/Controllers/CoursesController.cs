@@ -4,9 +4,11 @@ using IntelligentLMS.Course.Application.Interfaces;
 using IntelligentLMS.Course.Application.DTOs;
 using IntelligentLMS.Shared.Events;
 using SharedDTOs = IntelligentLMS.Shared.DTOs.Courses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Security.Claims;
 using System.Text.Json;
 using CourseEntity = IntelligentLMS.Course.Entities.Course;
 
@@ -29,6 +31,23 @@ public class CoursesController : ControllerBase
         _cache = cache;
     }
 
+    private Guid? GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("nameid")?.Value;
+        if (Guid.TryParse(userIdClaim, out var userId))
+            return userId;
+        return null;
+    }
+
+    private string GetCurrentRole()
+    {
+        return (User.FindFirst(ClaimTypes.Role)?.Value
+            ?? User.FindFirst("role")?.Value
+            ?? string.Empty).ToLowerInvariant();
+    }
+
 
 
     [HttpGet]
@@ -37,11 +56,18 @@ public class CoursesController : ControllerBase
         const string cacheKey = "courses:all";
         if (_cache != null)
         {
-            var cached = await _cache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrWhiteSpace(cached))
+            try
             {
-                var fromCache = JsonSerializer.Deserialize<List<SharedDTOs.CourseDto>>(cached, JsonOptions);
-                if (fromCache != null) return Ok(fromCache);
+                var cached = await _cache.GetStringAsync(cacheKey);
+                if (!string.IsNullOrWhiteSpace(cached))
+                {
+                    var fromCache = JsonSerializer.Deserialize<List<SharedDTOs.CourseDto>>(cached, JsonOptions);
+                    if (fromCache != null) return Ok(fromCache);
+                }
+            }
+            catch
+            {
+                // Redis lỗi -> bỏ qua cache, lấy từ DB
             }
         }
 
@@ -53,20 +79,51 @@ public class CoursesController : ControllerBase
             Description = c.Description,
             Level = c.Level,
             Category = c.Category,
-            InstructorId = c.InstructorId
+            InstructorId = c.InstructorId,
+            Price = c.Price
         }).ToList();
 
         if (_cache != null)
         {
-            await _cache.SetStringAsync(
-                cacheKey,
-                JsonSerializer.Serialize(courseDtos, JsonOptions),
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-                }
-            );
+            try
+            {
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonSerializer.Serialize(courseDtos, JsonOptions),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                    }
+                );
+            }
+            catch { /* bỏ qua lỗi ghi cache */ }
         }
+
+        return Ok(courseDtos);
+    }
+
+    [Authorize(Roles = "Admin,Teacher")]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyCourses()
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized("Không xác định được người dùng.");
+
+        var courses = await _context.Courses
+            .Where(c => c.InstructorId == userId.Value)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+
+        var courseDtos = courses.Select(c => new SharedDTOs.CourseDto
+        {
+            Id = c.Id,
+            Title = c.Title,
+            Description = c.Description,
+            Level = c.Level,
+            Category = c.Category,
+            InstructorId = c.InstructorId,
+            Price = c.Price
+        }).ToList();
 
         return Ok(courseDtos);
     }
@@ -87,7 +144,8 @@ public class CoursesController : ControllerBase
             Description = course.Description,
             Level = course.Level,
             Category = course.Category,
-            InstructorId = course.InstructorId
+            InstructorId = course.InstructorId,
+            Price = course.Price
         };
         return Ok(courseDto);
     }
@@ -120,6 +178,7 @@ public class CoursesController : ControllerBase
             Level = course.Level,
             Category = course.Category,
             InstructorId = course.InstructorId,
+            Price = course.Price,
             Lessons = course.Lessons
                 .OrderBy(l => l.Order)
                 .Select(l => new SharedDTOs.LessonDto
@@ -156,17 +215,21 @@ public class CoursesController : ControllerBase
         return Ok(new { Count = count });
     }
 
+    [Authorize(Roles = "Admin,Teacher")]
     [HttpPost]
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest request)
     {
-        // In a real app, get InstructorId from JWT claims
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized("Không xác định được người dùng.");
+
         var course = new CourseEntity
         {
             Title = request.Title,
             Description = request.Description,
             Level = request.Level,
             Category = request.Category,
-            InstructorId = Guid.NewGuid() // Placeholder
+            InstructorId = userId.Value,
+            Price = request.Price
         };
 
         _context.Courses.Add(course);
@@ -184,10 +247,51 @@ public class CoursesController : ControllerBase
             Description = course.Description,
             Level = course.Level,
             Category = course.Category,
-            InstructorId = course.InstructorId
+            InstructorId = course.InstructorId,
+            Price = course.Price
         };
 
         return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, courseDto);
+    }
+
+    [Authorize(Roles = "Admin,Teacher")]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateCourse(Guid id, [FromBody] CreateCourseRequest request)
+    {
+        var course = await _context.Courses.FindAsync(id);
+        if (course == null) return NotFound();
+
+        var role = GetCurrentRole();
+        var userId = GetCurrentUserId();
+        if (role == "teacher" && (userId == null || course.InstructorId != userId.Value))
+            return Forbid();
+
+        course.Title = request.Title;
+        course.Description = request.Description;
+        course.Level = request.Level;
+        course.Category = request.Category;
+        course.Price = request.Price;
+
+        await _context.SaveChangesAsync();
+
+        if (_cache != null)
+        {
+            await _cache.RemoveAsync("courses:all");
+            await _cache.RemoveAsync($"courses:detail:{id}");
+        }
+
+        var courseDto = new SharedDTOs.CourseDto
+        {
+            Id = course.Id,
+            Title = course.Title,
+            Description = course.Description,
+            Level = course.Level,
+            Category = course.Category,
+            InstructorId = course.InstructorId,
+            Price = course.Price
+        };
+
+        return Ok(courseDto);
     }
 
     [HttpPost("{courseId}/lessons")]
@@ -218,11 +322,17 @@ public class CoursesController : ControllerBase
         return Ok(lessonDto);
     }
 
+    [Authorize(Roles = "Admin,Teacher")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCourse(Guid id)
     {
         var course = await _context.Courses.FindAsync(id);
         if (course == null) return NotFound();
+
+        var role = GetCurrentRole();
+        var userId = GetCurrentUserId();
+        if (role == "teacher" && (userId == null || course.InstructorId != userId.Value))
+            return Forbid();
 
         _context.Courses.Remove(course);
         await _context.SaveChangesAsync();
