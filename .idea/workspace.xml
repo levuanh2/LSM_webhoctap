@@ -5,54 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="41151eb8-a17b-4633-af52-2b7ba12b559a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/fc43a18c-5493-4589-9a0c-57d34290838e.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/fc43a18c-5493-4589-9a0c-57d34290838e.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/fc43a18c-5493-4589-9a0c-57d34290838e/storage_v2/_src_/database/lms_auth.tQ6sIg/schema/public.abK9xQ.meta" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/fc43a18c-5493-4589-9a0c-57d34290838e/storage_v2/_src_/database/lms_auth.tQ6sIg/schema/public.abK9xQ.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/CourseCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/CourseCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Footer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Footer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Navbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Navbar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/components/Sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/layouts/AdminLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/layouts/AdminLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/layouts/UserLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/layouts/UserLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/admin/Courses.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/admin/Courses.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/auth/ForgotPassword.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/auth/ForgotPassword.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/auth/Login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/auth/Login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/CourseDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/CourseDetail.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Courses.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Courses.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Dashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/PaymentResult.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/PaymentResult.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/Profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/tailwind.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Gateway/IntelligentLMS.Gateway/obj/Debug/net8.0/IntelligentLMS.Gateway.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Gateway/IntelligentLMS.Gateway/obj/Debug/net8.0/IntelligentLMS.Gateway.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Gateway/IntelligentLMS.Gateway/obj/Debug/net8.0/IntelligentLMS.Gateway.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Gateway/IntelligentLMS.Gateway/obj/Debug/net8.0/IntelligentLMS.Gateway.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics/obj/Debug/net8.0/IntelligentLMS.Analytics.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth/obj/Debug/net8.0/IntelligentLMS.Auth.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Application/DTOs/CreateCourseRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Application/DTOs/CreateCourseRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/LearningPath.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/frontend/src/pages/user/LearningPath.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/kafka/consumer.py" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/kafka/consumer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/kafka/event_handlers.py" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/kafka/event_handlers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/app/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/AI/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Controllers/CoursesController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Controllers/CoursesController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Entities/CourseEntities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Entities/CourseEntities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/obj/Debug/net8.0/IntelligentLMS.Course.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress/obj/Debug/net8.0/IntelligentLMS.Progress.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/Controllers/UsersController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/Controllers/UsersController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/User/IntelligentLMS.User/obj/Debug/net8.0/IntelligentLMS.User.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/DTOs/Courses/CourseDto.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/DTOs/Courses/CourseDto.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/obj/Debug/net8.0/IntelligentLMS.Shared.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/obj/Debug/net8.0/IntelligentLMS.Shared.AssemblyInfo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/obj/Debug/net8.0/IntelligentLMS.Shared.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Shared/IntelligentLMS.Shared/obj/Debug/net8.0/IntelligentLMS.Shared.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/appsettings.json" beforeDir="false" afterPath="$PROJECT_DIR$/IntelligentLMS/src/Services/Course/IntelligentLMS.Course/appsettings.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,6 +27,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "levuanh2"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/levuanh2/LSM_webhoctap.git",
+    "accountId": "183ffc0f-97a5-47f6-8bc2-76e568cee258"
+  }
+}]]></component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -73,22 +50,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;frontend&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/LENOVO&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "E:/doancosonganh/LSM/LSM_webhoctap",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-a101402ee41c-968fe969f28a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.28238.29" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="41151eb8-a17b-4633-af52-2b7ba12b559a" name="Changes" comment="" />
