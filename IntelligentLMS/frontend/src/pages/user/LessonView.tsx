@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { courseApi, CourseDetailDto } from '../../services/api';
+import { aiApi, ReviewResponse, ReviewStartResponse } from '../../services/aiApi';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const LessonView = () => {
   const { courseId } = useParams();
@@ -12,11 +14,17 @@ const LessonView = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
-  const [completingId, setCompletingId] = useState<string | null>(null);
   const authed = isAuthenticated();
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'docs'>('overview');
+
+  // AI Review (chat)
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSession, setReviewSession] = useState<ReviewStartResponse | null>(null);
+  const [reviewAnswer, setReviewAnswer] = useState('');
+  const [reviewResult, setReviewResult] = useState<ReviewResponse | null>(null);
 
   useEffect(() => {
     if (!authed && courseId) {
@@ -58,6 +66,7 @@ const LessonView = () => {
 
   const lessons = course?.lessons || [];
   const lesson = lessons[currentLesson];
+  const isCompleted = !!lesson?.id && completedLessonIds.has(lesson.id);
 
   const isYoutube = (url?: string) =>
     !!url && (url.includes('youtube.com') || url.includes('youtu.be'));
@@ -71,34 +80,66 @@ const LessonView = () => {
     return lesson.contentUrl;
   }, [lesson?.contentUrl]);
 
-  const courseDocs = useMemo(() => {
-    const items =
-      (course?.lessons || [])
-        .filter((l) => !!l.contentUrl)
-        .map((l) => {
-          const type = (l.contentType || '').toLowerCase();
-          const url = l.contentUrl;
-          const isVid = type === 'video' || isYoutube(url);
-          const label = isVid ? 'Video' : (l.contentType || 'Tài liệu');
-          return {
-            id: l.id,
-            title: l.title,
-            url,
-            label,
-            order: l.order ?? 0,
-          };
-        })
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const resetReview = () => {
+    setReviewError(null);
+    setReviewSession(null);
+    setReviewAnswer('');
+    setReviewResult(null);
+  };
 
-    // de-dupe theo URL (nếu trùng)
-    const seen = new Set<string>();
-    return items.filter((x) => {
-      if (!x.url) return false;
-      if (seen.has(x.url)) return false;
-      seen.add(x.url);
-      return true;
-    });
-  }, [course?.lessons]);
+  const startAiReview = async () => {
+    if (!lesson?.id || !courseId) return;
+    setReviewOpen(true);
+    setReviewLoading(true);
+    setReviewError(null);
+    setReviewSession(null);
+    setReviewAnswer('');
+    setReviewResult(null);
+    try {
+      const res = await aiApi.startReview({
+        lesson_id: lesson.id,
+        course_id: courseId,
+        lesson_title: lesson.title,
+        lesson_content: lesson.content,
+      });
+      setReviewSession(res);
+    } catch (e: any) {
+      setReviewError(getApiErrorMessage(e) || 'Không gọi được AI ôn tập.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const submitAiAnswer = async () => {
+    const sid = reviewSession?.session_id;
+    const ans = reviewAnswer.trim();
+    if (!sid) return;
+    if (!ans) {
+      setReviewError('Bạn hãy nhập câu trả lời trước khi gửi.');
+      return;
+    }
+    setReviewLoading(true);
+    setReviewError(null);
+    setReviewResult(null);
+    try {
+      const res = await aiApi.submitReview({ session_id: sid, answer: ans });
+      setReviewResult(res);
+
+      // Auto complete nếu đạt
+      if (res.is_pass && user && courseId && lesson?.id && !completedLessonIds.has(lesson.id)) {
+        try {
+          await courseApi.completeLesson({ userId: user.id, courseId, lessonId: lesson.id });
+          setCompletedLessonIds((prev) => new Set(prev).add(lesson.id));
+        } catch {
+          // ignore: UI vẫn hiển thị kết quả chấm, user có thể thử lại sau
+        }
+      }
+    } catch (e: any) {
+      setReviewError(getApiErrorMessage(e) || 'AI chưa chấm được câu trả lời. Thử lại nhé.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
 
   if (!authed) {
     return (
@@ -161,250 +202,235 @@ const LessonView = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-white animate-in fade-in duration-500">
-      
-      {/* KHU VỰC BÊN TRÁI: Video & Nội dung */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {/* Content */}
-        <div className="aspect-video bg-black w-full shadow-lg relative flex items-center justify-center">
-          {loading ? (
-            <div className="text-white/70 text-sm font-bold">Đang tải...</div>
-          ) : !lesson ? (
-            <div className="text-white/70 text-sm font-bold">Chưa có bài học</div>
-          ) : lesson.contentType?.toLowerCase() === 'video' && (youtubeEmbedUrl || lesson.contentUrl) ? (
-            youtubeEmbedUrl ? (
-              <iframe
-                className="w-full h-full"
-                src={youtubeEmbedUrl}
-                title="Lesson Video"
-                allowFullScreen
-              />
-            ) : (
-              <div className="p-8 text-white/90 max-w-4xl">
-                <p className="text-lg font-black mb-2">{lesson.title}</p>
-                <p className="text-sm text-white/70 whitespace-pre-wrap mb-4">{lesson.content}</p>
-                <a
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-sm font-bold hover:bg-white/15"
-                  href={lesson.contentUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className="material-symbols-outlined">open_in_new</span>
-                  Mở video/tài liệu
-                </a>
-              </div>
-            )
-          ) : (
-            <div className="p-8 text-white/90 max-w-4xl">
-              <p className="text-lg font-black mb-2">{lesson.title}</p>
-              <p className="text-sm text-white/70 whitespace-pre-wrap">{lesson.content}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="p-8 max-w-4xl mx-auto">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
-                {lesson?.title || 'Bài học'}
-              </h1>
-              <p className="text-sm text-gray-400 mt-2">
-                Khóa học: <span className="text-blue-600 font-bold">{course?.title || '—'}</span>
-              </p>
-            </div>
-            {lesson && user && (
-              <button
-                disabled={completingId === lesson.id || completedLessonIds.has(lesson.id)}
-                onClick={async () => {
-                  if (!user || !courseId || !lesson) return;
-                  setCompletingId(lesson.id);
-                  try {
-                    await courseApi.completeLesson({ userId: user.id, courseId, lessonId: lesson.id });
-                    setCompletedLessonIds((prev) => new Set(prev).add(lesson.id));
-                  } finally {
-                    setCompletingId(null);
-                  }
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${
-                  completedLessonIds.has(lesson.id)
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                    : 'border border-blue-100 text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                <span className="material-symbols-outlined">
-                  {completedLessonIds.has(lesson.id) ? 'check_circle' : 'check_circle_outline'}
-                </span>
-                {completedLessonIds.has(lesson.id) ? 'Đã hoàn thành' : completingId === lesson.id ? 'Đang lưu...' : 'Đánh dấu hoàn thành'}
-              </button>
-            )}
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-8 border-b border-gray-100 mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab('overview')}
-              className={`pb-4 text-sm font-bold ${
-                activeTab === 'overview'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              Tổng quan
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('docs')}
-              className={`pb-4 text-sm font-bold ${
-                activeTab === 'docs'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              Tài liệu
-            </button>
-          </div>
-
-          {activeTab === 'overview' && (
-            <div className="text-gray-600 text-sm leading-relaxed space-y-4">
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Giới thiệu khóa học</p>
-                <p className="text-sm text-gray-700">{course?.description || '—'}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-gray-100 p-4 bg-white">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bài học</p>
-                  <p className="text-xl font-black text-gray-900 mt-1">{lessons.length}</p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 p-4 bg-white">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Đang học</p>
-                  <p className="text-xl font-black text-gray-900 mt-1">
-                    {lessons.length === 0 ? '—' : `${currentLesson + 1}/${lessons.length}`}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 p-4 bg-white">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hoàn thành</p>
-                  <p className="text-xl font-black text-gray-900 mt-1">{completedLessonIds.size}</p>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
-                <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2">Mục tiêu bài học</p>
-                <ul className="list-disc pl-5 space-y-1 text-sm text-blue-900/90 font-semibold">
-                  <li>Nắm ý chính của bài: <span className="font-black">{lesson?.title || '—'}</span></li>
-                  <li>Hoàn thành bài để cập nhật tiến độ và gợi ý học tiếp</li>
-                  <li>Ôn lại nội dung ở tab Tài liệu khi cần</li>
-                </ul>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  disabled={currentLesson <= 0}
-                  onClick={() => setCurrentLesson((i) => Math.max(0, i - 1))}
-                  className="px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-700 font-black text-sm hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
-                >
-                  ← Bài trước
-                </button>
-                <button
-                  type="button"
-                  disabled={currentLesson >= lessons.length - 1}
-                  onClick={() => setCurrentLesson((i) => Math.min(lessons.length - 1, i + 1))}
-                  className="px-4 py-3 rounded-2xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600"
-                >
-                  Bài tiếp theo →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'docs' && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tài liệu & liên kết</p>
-                <p className="text-sm text-gray-600">
-                  Danh sách này tổng hợp các link video/tài liệu có trong khóa học. Bạn có thể mở nhanh để ôn tập.
-                </p>
-              </div>
-
-              {courseDocs.length === 0 ? (
-                <div className="p-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
-                  Chưa có link tài liệu/video trong dữ liệu khóa học.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {courseDocs.map((d) => (
-                    <a
-                      key={d.url}
-                      className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
-                      href={d.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <span className={`material-symbols-outlined ${d.label.toLowerCase() === 'video' ? 'text-red-500' : 'text-blue-600'}`}>
-                        {d.label.toLowerCase() === 'video' ? 'play_circle' : 'description'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-gray-900 truncate">{d.title}</p>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{d.label}</p>
-                      </div>
-                      <span className="bg-white text-blue-600 p-2 rounded-lg border border-blue-100">
-                        <span className="material-symbols-outlined">open_in_new</span>
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* KHU VỰC BÊN PHẢI: Syllabus động */}
-      <aside className="w-full lg:w-96 bg-gray-50 border-l border-gray-100 flex flex-col h-full overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-white">
-          <h3 className="font-bold text-gray-800">Nội dung học tập</h3>
-          <p className="text-[10px] font-bold text-blue-600 mt-1 uppercase">
-            Tiến độ: {lessons.length === 0 ? 0 : currentLesson + 1}/{lessons.length} bài học
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white/70 animate-in fade-in duration-500">
+      {/* SIDEBAR TRÁI */}
+      <aside className="hidden lg:flex w-[280px] shrink-0 flex-col border-r border-blue-100 bg-white/95 shadow-[4px_0_24px_rgba(37,99,235,0.06)]">
+        <div className="px-4 py-4 border-b border-blue-100">
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Khóa học</p>
+          <p className="mt-1 line-clamp-2 text-sm font-extrabold text-slate-900">{course?.title || '—'}</p>
+          <p className="mt-2 text-[11px] font-bold text-slate-500">
+            {lessons.length === 0 ? 0 : currentLesson + 1}/{lessons.length} • {completedLessonIds.size} hoàn thành
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-2 py-3">
           {lessons.map((item, index) => {
-            const isCompleted = item.id ? completedLessonIds.has(item.id) : false;
+            const done = item.id ? completedLessonIds.has(item.id) : false;
+            const active = index === currentLesson;
             return (
-              <div
+              <button
                 key={item.id || index}
+                type="button"
                 onClick={() => setCurrentLesson(index)}
-                className={`p-4 rounded-2xl flex items-center gap-4 transition-all cursor-pointer border ${
-                  index === currentLesson ? "bg-white border-blue-200 shadow-sm" : "bg-transparent hover:bg-white/50"
+                className={`w-full text-left rounded-xl px-3 py-2.5 mb-1 border transition ${
+                  active ? 'bg-blue-50 border-blue-200' : 'bg-transparent border-transparent hover:bg-slate-50'
                 }`}
               >
-                <div className={`size-8 rounded-full flex items-center justify-center shrink-0 ${
-                  index === currentLesson ? 'bg-blue-600 text-white' :
-                  isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'
-                }`}>
-                  {isCompleted ? (
-                    <span className="material-symbols-outlined text-sm">check</span>
-                  ) : (
-                    <span className="text-xs font-bold">{index + 1}</span>
-                  )}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`size-7 rounded-full flex items-center justify-center text-[11px] font-black ${
+                      active ? 'bg-primary text-white' : done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {done ? <span className="material-symbols-outlined text-[16px]">check</span> : index + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-extrabold text-slate-900">{item.title}</p>
+                    <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      {item.contentType || 'Lesson'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-800 truncate">{item.title}</p>
-                  <p className="text-[10px] text-gray-400">{item.contentType || 'Lesson'}</p>
-                </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </aside>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #dbeafe; border-radius: 10px; }
-      `}</style>
+      {/* NỘI DUNG PHẢI */}
+      <main className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="mx-auto max-w-5xl px-4 py-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                {course?.title || 'Khóa học'} / {lesson?.contentType || 'Lesson'}
+              </p>
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{lesson?.title || 'Bài học'}</h1>
+            </div>
+
+            {lesson && user && (
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black border ${
+                    isCompleted ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  <span className={`size-2 rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  {isCompleted ? 'Đã hoàn thành (đạt AI)' : 'Chưa hoàn thành'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={startAiReview}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-black text-white shadow-md shadow-primary/25 hover:bg-primary-hover"
+                >
+                  <span className="material-symbols-outlined text-[18px]">psychology</span>
+                  Ôn tập để hoàn thành
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* BÀI HỌC */}
+          <div className="mt-5 lms-content-panel p-5">
+            {loading ? (
+              <div className="text-sm text-slate-500">Đang tải...</div>
+            ) : !lesson ? (
+              <div className="text-sm text-slate-500">Chưa có bài học</div>
+            ) : lesson.contentType?.toLowerCase() === 'video' && (youtubeEmbedUrl || lesson.contentUrl) ? (
+              <div className="space-y-3">
+                <div className="aspect-video overflow-hidden rounded-xl border border-slate-200 bg-black">
+                  {youtubeEmbedUrl ? (
+                    <iframe className="h-full w-full" src={youtubeEmbedUrl} title="Lesson Video" allowFullScreen />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-white/70">Mở video bên ngoài</div>
+                  )}
+                </div>
+                {lesson.contentUrl ? (
+                  <a
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-900 hover:border-primary/25 hover:text-primary"
+                    href={lesson.contentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                    Mở video/tài liệu
+                  </a>
+                ) : null}
+                {lesson.content ? <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{lesson.content}</p> : null}
+              </div>
+            ) : (
+              <div className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{lesson.content}</div>
+            )}
+          </div>
+
+          {/* ÔN TẬP AI */}
+          {reviewOpen && (
+            <div className="mt-5 lms-content-panel overflow-hidden">
+              <div className="flex items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/40 px-5 py-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/80">Ôn tập bằng AI (Ollama)</p>
+                  <p className="mt-1 truncate text-sm font-extrabold text-slate-900">Trả lời để hệ thống ghi nhận hoàn thành</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetReview();
+                    setReviewOpen(false);
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
+                >
+                  Đóng
+                </button>
+              </div>
+
+              <div className="px-5 py-4 space-y-3">
+                {reviewError && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-700">
+                    {reviewError}
+                  </div>
+                )}
+
+                {reviewLoading && !reviewSession ? (
+                  <div className="rounded-xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-500">
+                    AI đang tạo câu hỏi từ nội dung bài...
+                  </div>
+                ) : reviewSession ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Câu hỏi</p>
+                      <p className="mt-1 text-sm font-bold text-slate-900 whitespace-pre-wrap">{reviewSession.question}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Câu trả lời của bạn</label>
+                      <textarea
+                        rows={3}
+                        value={reviewAnswer}
+                        onChange={(e) => setReviewAnswer(e.target.value)}
+                        placeholder="Nhập câu trả lời..."
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={submitAiAnswer}
+                          disabled={reviewLoading || !reviewAnswer.trim()}
+                          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-black text-white shadow-md shadow-primary/25 hover:bg-primary-hover disabled:opacity-60"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">send</span>
+                          {reviewLoading ? 'Đang chấm...' : 'Gửi để AI chấm'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startAiReview}
+                          disabled={reviewLoading}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-900 hover:border-primary/25 hover:text-primary disabled:opacity-60"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">refresh</span>
+                          Sinh câu hỏi khác
+                        </button>
+                      </div>
+                    </div>
+
+                    {reviewResult && (
+                      <div className="rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-extrabold text-slate-900">
+                            Kết quả: {reviewResult.is_pass ? 'Đạt' : 'Chưa đạt'}
+                          </p>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-black ${
+                              reviewResult.is_pass ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {reviewResult.score}/100
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{reviewResult.feedback}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              disabled={currentLesson <= 0}
+              onClick={() => setCurrentLesson((i) => Math.max(0, i - 1))}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              ← Bài trước
+            </button>
+            <button
+              type="button"
+              disabled={currentLesson >= lessons.length - 1}
+              onClick={() => setCurrentLesson((i) => Math.min(lessons.length - 1, i + 1))}
+              className="rounded-xl bg-primary px-4 py-3 text-xs font-black text-white shadow-md shadow-primary/25 hover:bg-primary-hover disabled:opacity-50"
+            >
+              Bài tiếp theo →
+            </button>
+          </div>
+        </div>
+
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.18); border-radius: 10px; }
+        `}</style>
+      </main>
     </div>
   );
 };

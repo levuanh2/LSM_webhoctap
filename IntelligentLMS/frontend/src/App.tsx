@@ -1,38 +1,50 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import type { ReactElement } from "react";
 import { getRole } from "./utils/auth";
+import PageSpinner from "./components/PageSpinner";
 
-// Layouts
 import UserLayout from "./layouts/UserLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
-// Auth
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 
-// User Pages
-import Dashboard from "./pages/user/Dashboard";
-import Courses from "./pages/user/Courses";
-import LearningPath from "./pages/user/LearningPath";
-import Achievements from "./pages/user/Achievements";
-import Profile from "./pages/user/Profile";
-import Notifications from "./pages/user/Notifications";
-import LessonView from "./pages/user/LessonView";
-import CourseDetail from "./pages/user/CourseDetail";
-import PaymentResult from "./pages/user/PaymentResult";
+const Dashboard = lazy(() => import("./pages/user/Dashboard"));
+const Courses = lazy(() => import("./pages/user/Courses"));
+const LearningPath = lazy(() => import("./pages/user/LearningPath"));
+const Achievements = lazy(() => import("./pages/user/Achievements"));
+const Profile = lazy(() => import("./pages/user/Profile"));
+const Notifications = lazy(() => import("./pages/user/Notifications"));
+const LessonView = lazy(() => import("./pages/user/LessonView"));
+const CourseDetail = lazy(() => import("./pages/user/CourseDetail"));
+const PaymentResult = lazy(() => import("./pages/user/PaymentResult"));
+const AiHub = lazy(() => import("./pages/user/AiHub"));
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/Dashboard";
-import SystemMonitor from "./pages/admin/SystemMonitor";
-import Teachers from "./pages/admin/Teachers";
-import Users from "./pages/admin/Users";
-import CoursesAdmin from "./pages/admin/Courses";
-import TeacherDashboard from "./pages/teacher/Dashboard";
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const SystemMonitor = lazy(() => import("./pages/admin/SystemMonitor"));
+const Teachers = lazy(() => import("./pages/admin/Teachers"));
+const Users = lazy(() => import("./pages/admin/Users"));
+const CoursesAdmin = lazy(() => import("./pages/admin/Courses"));
+const TeacherDashboard = lazy(() => import("./pages/teacher/Dashboard"));
+
+const Sus = ({ children }: { children: ReactElement }) => (
+  <Suspense fallback={<PageSpinner />}>{children}</Suspense>
+);
 
 function RoleBasedDashboard() {
   const role = getRole();
-  if (role === "teacher") return <TeacherDashboard />;
-  return <AdminDashboard />;
+  if (role === "teacher")
+    return (
+      <Sus>
+        <TeacherDashboard />
+      </Sus>
+    );
+  return (
+    <Sus>
+      <AdminDashboard />
+    </Sus>
+  );
 }
 
 function AdminOnly({ children }: { children: ReactElement }) {
@@ -44,39 +56,138 @@ function AdminOnly({ children }: { children: ReactElement }) {
 function App() {
   return (
     <Routes>
-      {/* 1. PUBLIC ROUTES */}
       <Route path="/auth/login" element={<Login />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-      {/* 2. USER ROUTES */}
       <Route element={<UserLayout />}>
-        <Route path="/user/dashboard" element={<Dashboard />} />
-        <Route path="/user/courses" element={<Courses />} />
-        <Route path="/user/course/:id" element={<CourseDetail />} />
-        <Route path="/user/learning-path" element={<LearningPath />} />
-        <Route path="/user/achievements" element={<Achievements />} />
-        <Route path="/user/profile" element={<Profile />} />
-        <Route path="/user/notifications" element={<Notifications />} />
-        <Route path="/user/lesson/:courseId" element={<LessonView />} />
+        <Route
+          path="/user/dashboard"
+          element={
+            <Sus>
+              <Dashboard />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/courses"
+          element={
+            <Sus>
+              <Courses />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/course/:id"
+          element={
+            <Sus>
+              <CourseDetail />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/learning-path"
+          element={
+            <Sus>
+              <LearningPath />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/ai"
+          element={
+            <Sus>
+              <AiHub />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/achievements"
+          element={
+            <Sus>
+              <Achievements />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/profile"
+          element={
+            <Sus>
+              <Profile />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/notifications"
+          element={
+            <Sus>
+              <Notifications />
+            </Sus>
+          }
+        />
+        <Route
+          path="/user/lesson/:courseId"
+          element={
+            <Sus>
+              <LessonView />
+            </Sus>
+          }
+        />
       </Route>
 
-      {/* 3. ADMIN ROUTES */}
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<RoleBasedDashboard />} />
-        <Route path="/admin/monitor" element={<AdminOnly><SystemMonitor /></AdminOnly>} />
-        <Route path="/admin/teachers" element={<AdminOnly><Teachers /></AdminOnly>} />
-        <Route path="/admin/users" element={<AdminOnly><Users /></AdminOnly>} />
-        <Route path="/admin/courses" element={<CoursesAdmin />} />
+        <Route
+          path="/admin/monitor"
+          element={
+            <AdminOnly>
+              <Sus>
+                <SystemMonitor />
+              </Sus>
+            </AdminOnly>
+          }
+        />
+        <Route
+          path="/admin/teachers"
+          element={
+            <AdminOnly>
+              <Sus>
+                <Teachers />
+              </Sus>
+            </AdminOnly>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminOnly>
+              <Sus>
+                <Users />
+              </Sus>
+            </AdminOnly>
+          }
+        />
+        <Route
+          path="/admin/courses"
+          element={
+            <Sus>
+              <CoursesAdmin />
+            </Sus>
+          }
+        />
       </Route>
 
-      {/* Payment result (sau khi VNPAY redirect) */}
-      <Route path="/payment/result" element={<PaymentResult />} />
+      <Route
+        path="/payment/result"
+        element={
+          <Sus>
+            <PaymentResult />
+          </Sus>
+        }
+      />
 
-      {/* 4. DEFAULT REDIRECT */}
       <Route path="/" element={<Navigate to="/user/dashboard" />} />
       <Route path="/courses" element={<Navigate to="/user/courses" />} />
 
-      {/* 404 */}
       <Route
         path="*"
         element={

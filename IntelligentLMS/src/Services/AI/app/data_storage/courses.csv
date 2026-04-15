@@ -1,0 +1,7 @@
+course_id,category,difficulty,rating,popularity,prerequisite_course_id
+b6fc83a2-850d-4172-9266-f8a3eb7ad817,Frontend Development,1,4.2,120,
+bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb,Frontend Development,2,4.5,95,b6fc83a2-850d-4172-9266-f8a3eb7ad817
+dddddddd-dddd-dddd-dddd-dddddddddddd,Database,2,4.4,88,
+cccccccc-cccc-cccc-cccc-cccccccccccc,Backend Development,3,4.3,72,dddddddd-dddd-dddd-dddd-dddddddddddd
+eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,Security,2,4.6,110,
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa,Backend Development,3,4.7,150,eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee

@@ -22,8 +22,16 @@ export const getUserIdFromToken = (): string | null => {
   const payload = getTokenPayload();
   if (!payload) return null;
 
-  // Ưu tiên các key phổ biến
-  const candidateKeys = ['nameid', 'sub', 'userId', 'UserId', 'uid', 'id'];
+  // Ưu tiên các key phổ biến (JWT .NET dùng claim NameIdentifier dạng URI đầy đủ)
+  const candidateKeys = [
+    'nameid',
+    'sub',
+    'userId',
+    'UserId',
+    'uid',
+    'id',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+  ];
   for (const key of candidateKeys) {
     if (payload[key]) return payload[key];
   }

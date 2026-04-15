@@ -6,6 +6,7 @@ from app.config import settings
 from app.data.dataset_builder import get_progress_df
 from app.utils.feature_engineering import prepare_dropout_features
 from app.utils.logger import logger
+from app.utils.user_id import norm_id
 
 def extract_reasons(progress: float, days_inactive: float) -> list[str]:
     reasons = []
@@ -28,7 +29,8 @@ def predict_dropout_risk(user_id: str) -> dict:
     Returns: { "risk": LOW|MEDIUM|HIGH, "prob": float, "factors": dict, "reasons": list }
     """
     df = get_progress_df()
-    user_prog = df[df['user_id'] == user_id]
+    uq = norm_id(user_id)
+    user_prog = df[df['user_id'].map(norm_id) == uq] if not df.empty else df
     
     if user_prog.empty:
         return {

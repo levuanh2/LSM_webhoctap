@@ -1,7 +1,12 @@
+from typing import Literal
+
 import networkx as nx
 import pandas as pd
 from app.data.dataset_builder import get_courses_df
 from app.utils.logger import logger
+
+PathReason = Literal["ok", "empty_graph", "not_in_graph", "cycle"]
+
 
 class LearningPathService:
     _graph = None
@@ -34,28 +39,34 @@ class LearningPathService:
         cls._last_course_count = len(courses_df)
 
     @classmethod
-    def generate_path(cls, goal_course_id: str) -> list[str]:
+    def generate_path(cls, goal_course_id: str) -> tuple[list[str], PathReason]:
         """
-        Uses NetworkX to build a directed graph of courses based on prerequisites.
-        Returns the traversing path to reach the goal.
+        Dựng đồ thị prerequisite từ CSV AI. Trả về (path, lý do).
+        Khi mã khóa (vd. UUID catalog) không có trong CSV → path một phần tử để UI vẫn dùng được.
         """
         cls._build_graph()
         G = cls._graph
-        
-        if not G or goal_course_id not in G:
-            logger.warning(f"Goal course {goal_course_id} not found in graph.")
-            return []
-            
+
+        if G is None or G.number_of_nodes() == 0:
+            logger.warning("Learning path graph is empty (no courses in AI CSV).")
+            return [], "empty_graph"
+
+        if goal_course_id not in G:
+            logger.warning(
+                "Goal course %s not in AI prerequisite graph (CSV course_id often differs from catalog UUID).",
+                goal_course_id,
+            )
+            return [goal_course_id], "not_in_graph"
+
         ancestors = nx.ancestors(G, goal_course_id)
         subgraph = G.subgraph(list(ancestors) + [goal_course_id])
-        
+
         if not nx.is_directed_acyclic_graph(subgraph):
             logger.error("Learning path has cyclic dependencies (not a DAG).")
-            # Return partial path or empty to prevent infinite loops in UI
-            return []
-            
+            return [], "cycle"
+
         path = list(nx.topological_sort(subgraph))
-        return path
+        return path, "ok"
 
     @classmethod
     def force_rebuild(cls):

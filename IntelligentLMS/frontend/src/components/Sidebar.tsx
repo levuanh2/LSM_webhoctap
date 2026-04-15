@@ -76,6 +76,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
     { path: '/user/dashboard', icon: 'dashboard', label: 'Trang chủ' },
     { path: '/user/courses', icon: 'menu_book', label: 'Khóa học' },
     { path: '/user/learning-path', icon: 'trending_up', label: 'Lộ trình' },
+    { path: '/user/ai', icon: 'auto_awesome', label: 'AI (cá nhân hóa)' },
     { path: '/user/achievements', icon: 'workspace_premium', label: 'Bảng vàng' },
     { path: '/user/profile', icon: 'account_circle', label: 'Cá nhân' },
   ];

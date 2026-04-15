@@ -103,6 +103,55 @@ public class CoursesController : ControllerBase
         return Ok(courseDtos);
     }
 
+    /// <summary>
+    /// Lộ trình gợi ý theo <b>cùng danh mục</b> và thứ tự <b>cấp độ</b> (Beginner → Intermediate → Advanced)
+    /// trong catalog thật — dùng khi đồ thị prerequisite của AI (CSV) chưa khớp UUID khóa học.
+    /// </summary>
+    [HttpGet("learning-path-order")]
+    public async Task<IActionResult> GetLearningPathOrder([FromQuery] Guid goalCourseId)
+    {
+        var courses = await _context.Courses.AsNoTracking().ToListAsync();
+        var goal = courses.FirstOrDefault(c => c.Id == goalCourseId);
+        if (goal == null)
+            return NotFound(new { message = "Không tìm thấy khóa mục tiêu." });
+
+        static int LevelRank(string? level)
+        {
+            var l = (level ?? "").Trim();
+            if (l.Equals("Beginner", StringComparison.OrdinalIgnoreCase)) return 0;
+            if (l.Equals("Intermediate", StringComparison.OrdinalIgnoreCase)) return 1;
+            if (l.Equals("Advanced", StringComparison.OrdinalIgnoreCase)) return 2;
+            return 1;
+        }
+
+        var cat = (goal.Category ?? "").Trim();
+        var sameCategory = courses
+            .Where(c => string.Equals((c.Category ?? "").Trim(), cat, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(c => LevelRank(c.Level))
+            .ThenBy(c => c.Title)
+            .ToList();
+
+        if (sameCategory.Count == 0)
+        {
+            return Ok(new
+            {
+                goalCourseId = goal.Id.ToString(),
+                path = new[] { goal.Id.ToString() },
+                message = "Lộ trình gợi ý: chỉ có khóa mục tiêu."
+            });
+        }
+
+        var idx = sameCategory.FindIndex(c => c.Id == goalCourseId);
+        var path = sameCategory.Take(idx + 1).Select(c => c.Id.ToString()).ToList();
+
+        return Ok(new
+        {
+            goalCourseId = goal.Id.ToString(),
+            path,
+            message = "Lộ trình theo danh mục và cấp độ trong catalog (dữ liệu khóa học thật)."
+        });
+    }
+
     [Authorize(Roles = "Admin,Teacher")]
     [HttpGet("me")]
     public async Task<IActionResult> GetMyCourses()
@@ -302,11 +351,17 @@ public class CoursesController : ControllerBase
         return Ok(courseDto);
     }
 
+    [Authorize(Roles = "Admin,Teacher")]
     [HttpPost("{courseId}/lessons")]
     public async Task<IActionResult> AddLesson(Guid courseId, [FromBody] LessonDto lessonDto)
     {
         var course = await _context.Courses.FindAsync(courseId);
         if (course == null) return NotFound("Course not found");
+
+        var role = GetCurrentRole();
+        var userId = GetCurrentUserId();
+        if (role == "teacher" && (userId == null || course.InstructorId != userId.Value))
+            return Forbid();
 
         var lesson = new Lesson
         {

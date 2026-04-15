@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from app.api import recommend_routes, learning_path_routes, dropout_routes, system_routes, review_routes
+from app.api import advise_routes, recommend_routes, learning_path_routes, dropout_routes, system_routes, review_routes
 from app.kafka.consumer import start_consumer_thread, stop_consumer_thread
 from app.data.data_cache import data_cache
 from app.utils.logger import logger
@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Intelligent LMS - AI Service", version="1.1.0-refactored", lifespan=lifespan)
 
 # Register routes
+app.include_router(advise_routes.router)
 app.include_router(recommend_routes.router)
 app.include_router(learning_path_routes.router)
 app.include_router(dropout_routes.router)

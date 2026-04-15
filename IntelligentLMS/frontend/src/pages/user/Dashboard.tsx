@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
 import { courseApi, CourseDto, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
 import { pickContinueLearningEntry } from '../../utils/continueCourse';
 import { resolveCourseThumbnail } from '../../utils/courseImage';
+import AISuggestions from '../../components/AISuggestions';
 
 // Cấu hình Animation
 const container: Variants = {
@@ -88,6 +89,11 @@ const Dashboard = () => {
     };
     loadData();
   }, [location.pathname, user?.id]);
+
+  const coursesForAi = useMemo(
+    () => coursesWithProgress.map(({ course }) => course),
+    [coursesWithProgress]
+  );
 
   return (
     <>
@@ -185,6 +191,14 @@ const Dashboard = () => {
               </div>
             </div>
           </motion.section>
+
+          {user?.id ? (
+            <motion.section variants={item}>
+              <div className="lms-glass rounded-3xl border border-white/70 p-6">
+                <AISuggestions userId={user.id} courses={coursesForAi} limit={4} />
+              </div>
+            </motion.section>
+          ) : null}
 
           {/* Danh sách nhanh khóa học */}
           <motion.section variants={item} className="space-y-4">

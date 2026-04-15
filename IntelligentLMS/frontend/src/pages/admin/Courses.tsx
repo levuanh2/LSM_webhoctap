@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, MenuItem } from '@mui/material';
-import { adminCourseApi, courseApi, CourseDto } from '../../services/api';
+import { COURSE_CATEGORY_OPTIONS, isPresetCategory } from '../../constants/courseCategories';
+import { adminCourseApi, courseApi, CourseDetailDto, CourseDto, LessonDto } from '../../services/api';
 import { getRole } from '../../utils/auth';
 
 const CoursesAdmin = () => {
@@ -24,6 +25,19 @@ const CoursesAdmin = () => {
     thumbnailUrl: '',
   });
 
+  /** Quản lý bài học trong khóa */
+  const [lessonsFor, setLessonsFor] = useState<CourseDto | null>(null);
+  const [courseDetail, setCourseDetail] = useState<CourseDetailDto | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [lessonDraft, setLessonDraft] = useState({
+    title: '',
+    content: '',
+    order: 1,
+    contentUrl: '',
+    contentType: 'Video',
+  });
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+
   const load = async () => {
     setLoading(true);
     try {
@@ -40,6 +54,95 @@ const CoursesAdmin = () => {
     load();
   }, [isTeacher]);
 
+  useEffect(() => {
+    if (!lessonsFor) {
+      setCourseDetail(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setDetailLoading(true);
+      try {
+        const res = await courseApi.getCourseDetail(lessonsFor.id);
+        if (!cancelled) setCourseDetail(res.data);
+      } catch (e: any) {
+        if (!cancelled) {
+          setCourseDetail(null);
+          alert(e?.response?.data?.message || 'Không tải được chi tiết khóa học.');
+        }
+      } finally {
+        if (!cancelled) setDetailLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonsFor]);
+
+  useEffect(() => {
+    if (!courseDetail || editingLessonId) return;
+    const n = (courseDetail.lessons?.length ?? 0) + 1;
+    setLessonDraft((d) => ({ ...d, order: n }));
+  }, [courseDetail, editingLessonId]);
+
+  const reloadLessonsOnly = async () => {
+    if (!lessonsFor) return;
+    const res = await courseApi.getCourseDetail(lessonsFor.id);
+    setCourseDetail(res.data);
+  };
+
+  const saveLesson = async () => {
+    if (!lessonsFor || !lessonDraft.title.trim()) {
+      alert('Nhập tiêu đề bài học.');
+      return;
+    }
+    try {
+      if (editingLessonId) {
+        await adminCourseApi.updateLesson(lessonsFor.id, editingLessonId, lessonDraft);
+      } else {
+        await adminCourseApi.addLesson(lessonsFor.id, lessonDraft);
+      }
+      await reloadLessonsOnly();
+      setEditingLessonId(null);
+      setLessonDraft({
+        title: '',
+        content: '',
+        order: 1,
+        contentUrl: '',
+        contentType: 'Video',
+      });
+    } catch (e: any) {
+      alert(
+        typeof e?.response?.data === 'string'
+          ? e.response.data
+          : e?.response?.data?.message || 'Không lưu được bài học.'
+      );
+    }
+  };
+
+  const startEditLesson = (l: LessonDto) => {
+    setEditingLessonId(l.id);
+    setLessonDraft({
+      title: l.title,
+      content: l.content,
+      order: l.order,
+      contentUrl: l.contentUrl || '',
+      contentType: l.contentType || 'Video',
+    });
+  };
+
+  const cancelLessonEdit = () => {
+    setEditingLessonId(null);
+    const n = (courseDetail?.lessons?.length ?? 0) + 1;
+    setLessonDraft({
+      title: '',
+      content: '',
+      order: n,
+      contentUrl: '',
+      contentType: 'Video',
+    });
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -49,7 +152,7 @@ const CoursesAdmin = () => {
   const columns: GridColDef[] = [
     { field: 'title', headerName: 'Tên khóa học', flex: 1, minWidth: 220 },
     { field: 'level', headerName: 'Level', width: 130 },
-    { field: 'category', headerName: 'Category', width: 180 },
+    { field: 'category', headerName: 'Danh mục', width: 200 },
     {
       field: 'price',
       headerName: 'Giá',
@@ -59,13 +162,31 @@ const CoursesAdmin = () => {
     {
       field: 'actions',
       headerName: 'Hành động',
-      width: 220,
+      width: 300,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
         const r = params.row as CourseDto;
         return (
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                setEditingLessonId(null);
+                setLessonDraft({
+                  title: '',
+                  content: '',
+                  order: 1,
+                  contentUrl: '',
+                  contentType: 'Video',
+                });
+                setLessonsFor(r);
+              }}
+            >
+              Bài học
+            </Button>
             <Button
               size="small"
               variant="outlined"
@@ -131,6 +252,7 @@ const CoursesAdmin = () => {
             {isTeacher
               ? 'Bạn chỉ thấy và quản lý khóa học do chính bạn tạo'
               : 'CRUD dữ liệu thật từ Course service'}
+            . Sau khi tạo khóa, bấm <strong>Bài học</strong> để thêm nội dung — học viên mới xem được bài trong khóa.
           </p>
         </div>
         <div className="flex gap-2">
@@ -179,7 +301,22 @@ const CoursesAdmin = () => {
               <MenuItem value="Intermediate">Intermediate</MenuItem>
               <MenuItem value="Advanced">Advanced</MenuItem>
             </TextField>
-            <TextField label="Category" value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} fullWidth />
+            <TextField
+              label="Danh mục"
+              value={form.category}
+              onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+              select
+              fullWidth
+            >
+              {COURSE_CATEGORY_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+              {form.category.trim() && !isPresetCategory(form.category) ? (
+                <MenuItem value={form.category}>{form.category} (đang dùng)</MenuItem>
+              ) : null}
+            </TextField>
             <TextField
               label="Giá (VND)"
               type="number"
@@ -241,6 +378,123 @@ const CoursesAdmin = () => {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Hủy</Button>
           <Button variant="contained" onClick={onSave}>Lưu</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!lessonsFor}
+        onClose={() => {
+          setLessonsFor(null);
+          setCourseDetail(null);
+          setEditingLessonId(null);
+        }}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          Bài học trong khóa: {lessonsFor?.title ?? ''}
+        </DialogTitle>
+        <DialogContent style={{ paddingTop: 12 }}>
+          {detailLoading ? (
+            <p className="text-sm text-gray-500">Đang tải…</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase text-gray-400 mb-2">Danh sách bài ({courseDetail?.lessons?.length ?? 0})</p>
+                <div className="space-y-2 max-h-56 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                  {(courseDetail?.lessons || [])
+                    .slice()
+                    .sort((a, b) => a.order - b.order)
+                    .map((l) => (
+                      <div
+                        key={l.id}
+                        className="flex items-center justify-between gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm"
+                      >
+                        <span>
+                          <span className="font-semibold text-gray-700">{l.order}.</span> {l.title}
+                        </span>
+                        <Button size="small" variant="text" onClick={() => startEditLesson(l)}>
+                          Sửa
+                        </Button>
+                      </div>
+                    ))}
+                  {!(courseDetail?.lessons?.length) ? (
+                    <p className="text-sm text-gray-500 px-2 py-3">Chưa có bài nào — thêm ở form bên dưới.</p>
+                  ) : null}
+                </div>
+              </div>
+
+              <p className="text-xs font-bold uppercase text-gray-400">
+                {editingLessonId ? 'Sửa bài học' : 'Thêm bài học mới'}
+              </p>
+              <TextField
+                label="Tiêu đề bài"
+                value={lessonDraft.title}
+                onChange={(e) => setLessonDraft((p) => ({ ...p, title: e.target.value }))}
+                fullWidth
+                size="small"
+              />
+              <TextField
+                label="Nội dung (text / mô tả)"
+                value={lessonDraft.content}
+                onChange={(e) => setLessonDraft((p) => ({ ...p, content: e.target.value }))}
+                multiline
+                rows={3}
+                fullWidth
+                size="small"
+              />
+              <TextField
+                label="Thứ tự (order)"
+                type="number"
+                value={lessonDraft.order}
+                onChange={(e) => setLessonDraft((p) => ({ ...p, order: Number(e.target.value) || 0 }))}
+                fullWidth
+                size="small"
+              />
+              <TextField
+                label="Link video / tài liệu (URL)"
+                value={lessonDraft.contentUrl}
+                onChange={(e) => setLessonDraft((p) => ({ ...p, contentUrl: e.target.value }))}
+                fullWidth
+                size="small"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <TextField
+                label="Loại nội dung"
+                value={lessonDraft.contentType}
+                onChange={(e) => setLessonDraft((p) => ({ ...p, contentType: e.target.value }))}
+                select
+                fullWidth
+                size="small"
+              >
+                <MenuItem value="Video">Video</MenuItem>
+                <MenuItem value="Document">Document</MenuItem>
+                <MenuItem value="Text">Text</MenuItem>
+              </TextField>
+
+              <div className="flex flex-wrap gap-2">
+                <Button variant="contained" onClick={() => void saveLesson()}>
+                  {editingLessonId ? 'Cập nhật bài' : 'Thêm bài'}
+                </Button>
+                {editingLessonId ? (
+                  <Button variant="outlined" onClick={cancelLessonEdit}>
+                    Hủy sửa
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setLessonsFor(null);
+              setCourseDetail(null);
+              setEditingLessonId(null);
+            }}
+          >
+            Đóng
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/apiBase';
 
 // 1. Định nghĩa cấu trúc dữ liệu cho User (Dữ liệu từ User Service)
 export interface UserProfileResponse {
@@ -44,6 +45,15 @@ export interface CourseUpsertRequest {
   thumbnailUrl?: string;
 }
 
+/** Tạo bài học (Course service — Id do server gán) */
+export interface LessonCreateRequest {
+  title: string;
+  content: string;
+  order: number;
+  contentUrl?: string;
+  contentType?: string;
+}
+
 // 2. Định nghĩa cấu trúc dữ liệu cho Progress (Dữ liệu từ Progress Service)
 export interface CourseProgressResponse {
   id: string;
@@ -56,11 +66,8 @@ export interface CourseProgressResponse {
   completedLessonIds?: string[];
 }
 
-// Cổng của Gateway trong Docker của bạn
-const BASE_URL = 'http://localhost:5000'; 
-
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -128,6 +135,14 @@ export const courseApi = {
   getCourseDetail: (courseId: string) => api.get<CourseDetailDto>(`/courses/${courseId}/detail`),
 
   /**
+   * Lộ trình gợi ý theo cùng danh mục + cấp độ (Beginner → … → Advanced) — dữ liệu catalog thật.
+   */
+  getLearningPathOrder: (goalCourseId: string) =>
+    api.get<{ goalCourseId: string; path: string[]; message?: string }>(`/courses/learning-path-order`, {
+      params: { goalCourseId },
+    }),
+
+  /**
    * Lấy tiến độ học tập từ Progress Service
    */
   getCourseProgress: async (userId: string, courseId: string): Promise<CourseProgressResponse> => {
@@ -170,4 +185,22 @@ export const adminCourseApi = {
   createCourse: (data: CourseUpsertRequest) => api.post<CourseDto>('/courses', data),
   updateCourse: (id: string, data: CourseUpsertRequest) => api.put<CourseDto>(`/courses/${id}`, data),
   deleteCourse: (id: string) => api.delete(`/courses/${id}`),
+  addLesson: (courseId: string, data: LessonCreateRequest) =>
+    api.post<LessonDto>(`/courses/${courseId}/lessons`, {
+      title: data.title,
+      content: data.content,
+      order: data.order,
+      contentUrl: data.contentUrl ?? '',
+      contentType: data.contentType ?? 'Video',
+    }),
+  updateLesson: (courseId: string, lessonId: string, data: LessonCreateRequest & { id?: string }) =>
+    api.put<LessonDto>(`/courses/${courseId}/lessons/${lessonId}`, {
+      id: lessonId,
+      courseId,
+      title: data.title,
+      content: data.content,
+      order: data.order,
+      contentUrl: data.contentUrl ?? '',
+      contentType: data.contentType ?? 'Video',
+    }),
 };

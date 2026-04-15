@@ -21,10 +21,21 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetProfile(Guid id)
     {
         var profile = await _context.UserProfiles.FindAsync(id);
-        if (profile == null) return NotFound();
-        
-        return Ok(new UserProfileDto 
-        { 
+        // Chưa có dòng profile (user mới từ Auth) → trả shell 200 để client không lỗi 404
+        if (profile == null)
+        {
+            return Ok(new UserProfileDto
+            {
+                UserId = id,
+                FullName = string.Empty,
+                Bio = null,
+                AvatarUrl = null,
+                PhoneNumber = null
+            });
+        }
+
+        return Ok(new UserProfileDto
+        {
             UserId = profile.UserId,
             FullName = profile.FullName,
             Bio = profile.Bio,

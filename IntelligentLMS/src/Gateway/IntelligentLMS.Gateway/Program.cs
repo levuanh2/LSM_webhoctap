@@ -10,7 +10,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173") // frontend dev
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173") // Vite dev (localhost vs 127.0.0.1 là origin khác nhau)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -25,6 +27,8 @@ builder.Services.AddReverseProxy()
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Gateway chỉ lắng nghe HTTP (localhost/Docker); tránh lỗi metadata HTTPS khi validate JWT
+        options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

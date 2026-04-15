@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { UserProfileResponse, userApi } from '../services/api';
 import { getCurrentUserFromToken, isAuthenticated, logout } from '../utils/auth';
+import { getUnreadNotificationCount } from '../utils/notificationsStore';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<UserProfileResponse | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +76,19 @@ const Navbar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (location.pathname === '/user/courses') {
+      setSearchQuery(searchParams.get('q') || '');
+    }
+  }, [location.pathname, searchParams]);
+
+  useEffect(() => {
+    const sync = () => setUnreadNotifications(getUnreadNotificationCount());
+    sync();
+    window.addEventListener('lms-notifications-changed', sync);
+    return () => window.removeEventListener('lms-notifications-changed', sync);
+  }, []);
+
   const getInitials = (name: string | undefined) => {
     if (!name) return "U";
     return name.charAt(0).toUpperCase();
@@ -81,21 +99,40 @@ const Navbar = () => {
     window.location.reload();
   };
 
+  const submitSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const t = searchQuery.trim();
+    if (t) {
+      navigate(`/user/courses?q=${encodeURIComponent(t)}`);
+    } else {
+      navigate('/user/courses');
+    }
+  };
+
   return (
     <header className="sticky top-0 z-[100] flex min-h-[4.25rem] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-4 py-2 shadow-nav backdrop-blur-xl md:gap-4 md:px-8">
       <div className="order-1 flex min-w-0 w-full max-w-full sm:max-w-xl sm:flex-1">
-        <div className="relative w-full group">
+        <form onSubmit={submitSearch} className="relative w-full group">
           <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 transition group-focus-within:text-primary">
             <span className="material-symbols-outlined text-[22px]">search</span>
           </span>
           <input
-            type="text"
+            type="search"
+            name="q"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 py-2.5 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary/40 focus:bg-slate-50 focus:ring-2 focus:ring-primary/20"
-            placeholder="Tìm kiếm khóa học, bài học..."
+            autoComplete="off"
+            enterKeyHint="search"
+            className="w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 py-2.5 pl-11 pr-24 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary/40 focus:bg-slate-50 focus:ring-2 focus:ring-primary/20"
+            placeholder="Tìm khóa theo tên, danh mục… (Enter)"
           />
-        </div>
+          <button
+            type="submit"
+            className="absolute inset-y-1 right-1 rounded-xl bg-primary px-3 text-xs font-bold text-white shadow-sm transition hover:bg-primary/90"
+          >
+            Tìm
+          </button>
+        </form>
       </div>
 
       <div className="order-2 flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto md:gap-3">
@@ -124,7 +161,11 @@ const Navbar = () => {
           aria-label="Thông báo"
         >
           <span className="material-symbols-outlined text-[24px]">notifications</span>
-          <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+          {unreadNotifications > 0 ? (
+            <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white">
+              {unreadNotifications > 9 ? '9+' : unreadNotifications}
+            </span>
+          ) : null}
         </Link>
         ) : null}
 

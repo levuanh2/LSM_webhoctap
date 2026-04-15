@@ -1,22 +1,68 @@
 @import "tailwindcss";
 
+/*
+ * Theme tùy chỉnh (Tailwind v4)
+ * ————————————————————————————
+ * File `tailwind.config.js` KHÔNG được PostCSS tự nạp; mọi màu/shadow/font brand
+ * phải khai báo ở đây thì các class `bg-primary`, `shadow-soft`, `font-sans`… mới có CSS.
+ * Chỉnh màu thương hiệu: sửa các biến --color-* / --shadow-* bên dưới.
+ */
+@theme {
+  --color-primary: #2b7cee;
+  --color-primary-hover: #1e64d8;
+
+  --color-sidebar: #ffffff;
+  --color-sidebar-text: #64748b;
+
+  --color-background: #f8fafc;
+  --color-background-light: #f4f6fb;
+  --color-background-dark: #0f172a;
+
+  --color-card: #ffffff;
+  --color-border-color: #e2e8f0;
+  --color-lms-orange: #ff9f43;
+
+  --shadow-soft: 0 2px 16px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 8px 30px rgba(43, 124, 238, 0.08);
+  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06);
+
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
 @layer base {
   html {
     @apply antialiased scroll-smooth;
   }
-  /* Không dùng @apply bg-background / bg-primary — Tailwind v4 có thể không resolve theme.extend trong @apply */
+
   body {
     @apply font-sans text-slate-900;
-    background-color: #f8fafc;
+    background-color: var(--color-background);
   }
+
   ::selection {
     color: #0f172a;
     background-color: rgba(43, 124, 238, 0.22);
   }
 }
 
+/* Các trang dùng animate-in + fade-in (không có plugin tailwindcss-animate) */
+@layer utilities {
+  @keyframes lms-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-in.fade-in {
+    animation: lms-fade-in 0.5s ease-out both;
+  }
+}
+
 @layer components {
-  /* Nền trang có lưới nhẹ – dùng chung Dashboard / Courses */
   .lms-mesh-bg {
     background-color: #f4f6fb;
     background-image:
@@ -29,15 +75,58 @@
     @apply rounded-3xl border border-white/90 bg-white/[0.82] shadow-[0_2px_28px_rgba(43,124,238,0.09)] backdrop-blur-[18px];
   }
 
-  /* Khung nội dung trong UserLayout */
   .lms-content-panel {
     @apply rounded-2xl border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-md;
   }
 
-  /* Auth: chấm bi nhẹ */
   .lms-dot-bg {
     background-color: #fafbfc;
     background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
     background-size: 22px 22px;
+  }
+
+  /* Trang AI — orb + chấm “đang nhập” */
+  @keyframes lms-ai-orb-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(43, 124, 238, 0.35);
+    }
+    55% {
+      box-shadow: 0 0 0 14px rgba(43, 124, 238, 0);
+    }
+  }
+
+  .lms-ai-orb {
+    animation: lms-ai-orb-pulse 2.6s ease-in-out infinite;
+  }
+
+  @keyframes lms-ai-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.35;
+      transform: translateY(0);
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(-3px);
+    }
+  }
+
+  .lms-ai-typing span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgb(100 116 139);
+    animation: lms-ai-dot 1.15s infinite ease-in-out;
+  }
+
+  .lms-ai-typing span:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+
+  .lms-ai-typing span:nth-child(3) {
+    animation-delay: 0.32s;
   }
 }

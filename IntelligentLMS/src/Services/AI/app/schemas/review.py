@@ -1,8 +1,12 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class ReviewStartRequest(BaseModel):
     lesson_id: str
     course_id: str
+    # Optional: frontend có thể gửi thẳng nội dung bài để AI tự sinh câu hỏi (không phụ thuộc internal API)
+    lesson_title: Optional[str] = None
+    lesson_content: Optional[str] = None
 
 class ReviewStartResponse(BaseModel):
     session_id: str

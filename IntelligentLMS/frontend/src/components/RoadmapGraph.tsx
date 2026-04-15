@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -17,6 +17,12 @@ import { CourseDto } from '../services/api';
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 
 type StepStatus = 'completed' | 'current' | 'locked';
+
+type LearningStep = {
+  course: CourseDto;
+  status: StepStatus;
+  progress?: { progressPercentage?: number | null } | null;
+};
 
 type LearningStepData = Record<string, unknown> & {
   course: CourseDto;
@@ -68,15 +74,22 @@ const nodeTypes = {
 };
 
 interface RoadmapGraphProps {
-  steps: any[];
+  steps: LearningStep[];
 }
 
 const RoadmapGraph = ({ steps }: RoadmapGraphProps) => {
   const [selectedCourse, setSelectedCourse] = useState<CourseDto | null>(null);
 
   const { initialNodes, initialEdges } = useMemo(() => {
-    const nodes: any[] = [];
-    const edges: any[] = [];
+    const nodes: CourseNodeType[] = [];
+    const edges: Array<{
+      id: string;
+      source: string;
+      target: string;
+      animated: boolean;
+      style: { stroke: string; strokeWidth: number };
+      markerEnd: { type: MarkerType; color: string };
+    }> = [];
 
     steps.forEach((step, index) => {
       const pct = step.progress?.progressPercentage ?? 0;
@@ -121,7 +134,7 @@ const RoadmapGraph = ({ steps }: RoadmapGraphProps) => {
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-  const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
+  const onNodeClick = useCallback((event: MouseEvent, node: CourseNodeType) => {
     setSelectedCourse(node.data.course);
   }, []);
 
@@ -137,7 +150,7 @@ const RoadmapGraph = ({ steps }: RoadmapGraphProps) => {
         fitView
         attributionPosition="bottom-right"
       >
-        <MiniMap zoomable pannable nodeColor={(node) => {
+        <MiniMap zoomable pannable nodeColor={(node: Node<LearningStepData>) => {
             if (node.data?.status === 'completed') return '#22c55e';
             if (node.data?.status === 'current') return '#eab308';
             return '#cbd5e1';

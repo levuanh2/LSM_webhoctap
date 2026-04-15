@@ -87,6 +87,18 @@ using (var scope = app.Services.CreateScope())
         /* ignore nếu provider khác / đã có cột */
     }
 
+    // DB cũ: bổ sung cột cho Lesson phục vụ AI (Summary/Keywords)
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Lessons" ADD COLUMN IF NOT EXISTS "Summary" text NOT NULL DEFAULT '';""");
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Lessons" ADD COLUMN IF NOT EXISTS "Keywords" text[] NOT NULL DEFAULT ARRAY[]::text[];""");
+        await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Lessons" ADD COLUMN IF NOT EXISTS "SummaryUpdatedAt" timestamptz NULL;""");
+    }
+    catch
+    {
+        /* ignore nếu provider khác / đã có cột */
+    }
+
     await DbInitializer.SeedAsync(db);
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { authApi } from '../../services/api';
@@ -95,7 +95,7 @@ const Login = () => {
   };
 
   // ─── Hàm xử lý Submit chung cho cả Login và Register ───
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 

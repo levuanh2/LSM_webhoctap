@@ -10,7 +10,7 @@ from app.schemas.review import (
     ReviewSubmitRequest, ReviewResponse
 )
 from app.services.ollama_provider import OllamaProvider
-from app.utils.prompts import QUESTION_PROMPT, GRADING_PROMPT
+from app.utils.prompts import QUESTION_PROMPT, SUMMARY_PROMPT
 
 router = APIRouter(prefix="/ai/review", tags=["Review Q&A"])
 
@@ -19,24 +19,42 @@ redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 @router.post("/start", response_model=ReviewStartResponse)
 async def start_review(request: ReviewStartRequest):
-    # Lấy summary nội bộ trường từ Course Service
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.get(
-                f"{settings.COURSE_SERVICE_URL}/internal/lessons/{request.lesson_id}",
-                headers={"X-Internal-API-Key": settings.INTERNAL_API_KEY},
-                timeout=10.0
-            )
-            res.raise_for_status()
-            lesson_data = res.json()
-            summary = lesson_data.get("summary", "") # Handle lower/camel case depend on JSON serializer
-            if not summary:
-                summary = lesson_data.get("Summary", "")
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Cannot fetch lesson summary from Course Service: {str(e)}")
-        
+    summary = ""
+
+    # Ưu tiên: frontend gửi thẳng content -> tự sinh summary (không phụ thuộc internal API)
+    if request.lesson_content and request.lesson_content.strip():
+        try:
+            prompt = SUMMARY_PROMPT.format(content=request.lesson_content.strip())
+            json_resp = await OllamaProvider.generate_response(prompt=prompt, json_format=True)
+            data = json.loads(json_resp) if json_resp else {}
+            summary = (data.get("summary") or "").strip()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to summarize lesson content: {str(e)}")
+
+    # Fallback: lấy summary/content từ Course Service internal API
     if not summary:
-        raise HTTPException(status_code=400, detail="This lesson does not have a summary generated yet.")
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.get(
+                    f"{settings.COURSE_SERVICE_URL}/internal/lessons/{request.lesson_id}",
+                    headers={"X-Internal-API-Key": settings.INTERNAL_API_KEY},
+                    timeout=10.0
+                )
+                res.raise_for_status()
+                lesson_data = res.json()
+                summary = (lesson_data.get("summary", "") or lesson_data.get("Summary", "") or "").strip()
+                if not summary:
+                    content = (lesson_data.get("content", "") or lesson_data.get("Content", "") or "").strip()
+                    if content:
+                        prompt = SUMMARY_PROMPT.format(content=content)
+                        json_resp = await OllamaProvider.generate_response(prompt=prompt, json_format=True)
+                        data = json.loads(json_resp) if json_resp else {}
+                        summary = (data.get("summary") or "").strip()
+        except Exception as e:
+            raise HTTPException(status_code=404, detail=f"Cannot fetch lesson from Course Service: {str(e)}")
+
+    if not summary:
+        raise HTTPException(status_code=400, detail="Không có đủ nội dung để tạo câu hỏi ôn tập.")
 
     # Đưa vào cấu trúc Prompt
     prompt = QUESTION_PROMPT.format(summary=summary)
